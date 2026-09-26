@@ -1,0 +1,6 @@
+apiVersion: v2
+name: flamingo
+description: A Helm chart for Flamingo network credential harvester
+type: application
+version: 0.1.0
+appVersion: "latest"
