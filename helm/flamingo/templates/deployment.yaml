@@ -97,6 +97,18 @@ spec:
             {{- if .Values.config.ports.mongodb }}
             - "--mongodb-ports={{ .Values.config.ports.mongodb }}"
             {{- end }}
+            {{- if .Values.config.ports.smb }}
+            - "--smb-ports={{ .Values.config.ports.smb }}"
+            {{- end }}
+            {{- if .Values.config.ports.winrm }}
+            - "--winrm-ports={{ .Values.config.ports.winrm }}"
+            {{- end }}
+            {{- if .Values.config.ports.winrms }}
+            - "--winrms-ports={{ .Values.config.ports.winrms }}"
+            {{- end }}
+            {{- if .Values.config.ports.kerberos }}
+            - "--kerberos-ports={{ .Values.config.ports.kerberos }}"
+            {{- end }}
             {{- if .Values.metrics.enabled }}
             - "--metrics"
             - "--metrics-port={{ .Values.metrics.port }}"
@@ -207,6 +219,31 @@ spec:
             - name: mongodb
               containerPort: {{ .Values.service.ports.mongodb.targetPort }}
               protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.smb.enabled }}
+            - name: smb
+              containerPort: {{ .Values.service.ports.smb.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.winrm.enabled }}
+            - name: winrm
+              containerPort: {{ .Values.service.ports.winrm.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.winrms.enabled }}
+            - name: winrms
+              containerPort: {{ .Values.service.ports.winrms.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.kerberosTcp.enabled }}
+            - name: kerberos-tcp
+              containerPort: {{ .Values.service.ports.kerberosTcp.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.kerberosUdp.enabled }}
+            - name: kerberos-udp
+              containerPort: {{ .Values.service.ports.kerberosUdp.targetPort }}
+              protocol: UDP
             {{- end }}
             {{- if .Values.metrics.enabled }}
             - name: metrics

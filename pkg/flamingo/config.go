@@ -43,6 +43,10 @@ type ConfigPorts struct {
 	Postgres string `yaml:"postgres,omitempty"`
 	MySQL    string `yaml:"mysql,omitempty"`
 	MongoDB  string `yaml:"mongodb,omitempty"`
+	SMB      string `yaml:"smb,omitempty"`
+	WinRM    string `yaml:"winrm,omitempty"`
+	WinRMS   string `yaml:"winrms,omitempty"`
+	Kerberos string `yaml:"kerberos,omitempty"`
 }
 
 type ConfigBanners struct {

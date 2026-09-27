@@ -92,6 +92,36 @@ spec:
       protocol: {{ .Values.service.ports.mongodb.protocol | default "TCP" }}
       name: mongodb
     {{- end }}
+    {{- if .Values.service.ports.smb.enabled }}
+    - port: {{ .Values.service.ports.smb.port }}
+      targetPort: {{ .Values.service.ports.smb.targetPort }}
+      protocol: {{ .Values.service.ports.smb.protocol | default "TCP" }}
+      name: smb
+    {{- end }}
+    {{- if .Values.service.ports.winrm.enabled }}
+    - port: {{ .Values.service.ports.winrm.port }}
+      targetPort: {{ .Values.service.ports.winrm.targetPort }}
+      protocol: {{ .Values.service.ports.winrm.protocol | default "TCP" }}
+      name: winrm
+    {{- end }}
+    {{- if .Values.service.ports.winrms.enabled }}
+    - port: {{ .Values.service.ports.winrms.port }}
+      targetPort: {{ .Values.service.ports.winrms.targetPort }}
+      protocol: {{ .Values.service.ports.winrms.protocol | default "TCP" }}
+      name: winrms
+    {{- end }}
+    {{- if .Values.service.ports.kerberosTcp.enabled }}
+    - port: {{ .Values.service.ports.kerberosTcp.port }}
+      targetPort: {{ .Values.service.ports.kerberosTcp.targetPort }}
+      protocol: {{ .Values.service.ports.kerberosTcp.protocol | default "TCP" }}
+      name: kerberos-tcp
+    {{- end }}
+    {{- if .Values.service.ports.kerberosUdp.enabled }}
+    - port: {{ .Values.service.ports.kerberosUdp.port }}
+      targetPort: {{ .Values.service.ports.kerberosUdp.targetPort }}
+      protocol: {{ .Values.service.ports.kerberosUdp.protocol | default "UDP" }}
+      name: kerberos-udp
+    {{- end }}
     {{- if .Values.metrics.enabled }}
     - port: {{ .Values.metrics.port }}
       targetPort: {{ .Values.metrics.port }}
@@ -244,6 +274,30 @@ spec:
       protocol: TCP
       name: mongodb
     {{- end }}
+    {{- if .Values.service.ports.smb.enabled }}
+    - port: {{ .Values.service.ports.smb.port }}
+      targetPort: {{ .Values.service.ports.smb.targetPort }}
+      protocol: TCP
+      name: smb
+    {{- end }}
+    {{- if .Values.service.ports.winrm.enabled }}
+    - port: {{ .Values.service.ports.winrm.port }}
+      targetPort: {{ .Values.service.ports.winrm.targetPort }}
+      protocol: TCP
+      name: winrm
+    {{- end }}
+    {{- if .Values.service.ports.winrms.enabled }}
+    - port: {{ .Values.service.ports.winrms.port }}
+      targetPort: {{ .Values.service.ports.winrms.targetPort }}
+      protocol: TCP
+      name: winrms
+    {{- end }}
+    {{- if .Values.service.ports.kerberosTcp.enabled }}
+    - port: {{ .Values.service.ports.kerberosTcp.port }}
+      targetPort: {{ .Values.service.ports.kerberosTcp.targetPort }}
+      protocol: TCP
+      name: kerberos-tcp
+    {{- end }}
     {{- if .Values.metrics.enabled }}
     - port: {{ .Values.metrics.port }}
       targetPort: {{ .Values.metrics.port }}
@@ -317,5 +371,11 @@ spec:
       targetPort: {{ .Values.service.ports.snmp.targetPort }}
       protocol: UDP
       name: snmp
+    {{- end }}
+    {{- if .Values.service.ports.kerberosUdp.enabled }}
+    - port: {{ .Values.service.ports.kerberosUdp.port }}
+      targetPort: {{ .Values.service.ports.kerberosUdp.targetPort }}
+      protocol: UDP
+      name: kerberos-udp
     {{- end }}
 {{- end }}

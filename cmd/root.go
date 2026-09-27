@@ -32,6 +32,10 @@ type flamingoParameters struct {
 	MySQLPorts         string
 	MySQLBanner        string
 	MongoDBPorts       string
+	SMBPorts           string
+	WinRMPorts         string
+	WinRMSPorts        string
+	KerberosPorts      string
 	MetricsPort        uint16
 	EnableMetrics      bool
 	POP3Banner         string
@@ -152,6 +156,18 @@ func applyConfigFile(cmd *cobra.Command, cfg *flamingo.ConfigFile) {
 	if cfg.Ports.MongoDB != "" && !cmd.Flags().Changed("mongodb-ports") {
 		params.MongoDBPorts = cfg.Ports.MongoDB
 	}
+	if cfg.Ports.SMB != "" && !cmd.Flags().Changed("smb-ports") {
+		params.SMBPorts = cfg.Ports.SMB
+	}
+	if cfg.Ports.WinRM != "" && !cmd.Flags().Changed("winrm-ports") {
+		params.WinRMPorts = cfg.Ports.WinRM
+	}
+	if cfg.Ports.WinRMS != "" && !cmd.Flags().Changed("winrms-ports") {
+		params.WinRMSPorts = cfg.Ports.WinRMS
+	}
+	if cfg.Ports.Kerberos != "" && !cmd.Flags().Changed("kerberos-ports") {
+		params.KerberosPorts = cfg.Ports.Kerberos
+	}
 
 	// Banners
 	if cfg.Banners.POP3 != "" && !cmd.Flags().Changed("pop3-banner") {
@@ -220,7 +236,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&params.Quiet, "quiet", "q", false, "Hide startup banners and other extraneous output")
 	rootCmd.PersistentFlags().BoolVarP(&params.DontIgnoreFailures, "dont-ignore", "", false, "Treat individual listener failures as fatal")
 
-	rootCmd.Flags().StringVarP(&params.Protocols, "protocols", "", "ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet,postgres,mysql,mongodb", "Specify a comma-separated list of protocols")
+	rootCmd.Flags().StringVarP(&params.Protocols, "protocols", "", "ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet,postgres,mysql,mongodb,smb,winrm,kerberos", "Specify a comma-separated list of protocols")
 
 	// SNMP parameters
 	rootCmd.Flags().StringVarP(&params.SNMPPorts, "snmp-ports", "", "161", "The list of UDP ports to listen on for SNMP")
@@ -266,6 +282,12 @@ func init() {
 	rootCmd.Flags().StringVarP(&params.MySQLPorts, "mysql-ports", "", "3306", "The list of TCP ports to listen on for MySQL")
 	rootCmd.Flags().StringVarP(&params.MySQLBanner, "mysql-banner", "", "8.0.35", "MySQL server version banner to display")
 	rootCmd.Flags().StringVarP(&params.MongoDBPorts, "mongodb-ports", "", "27017", "The list of TCP ports to listen on for MongoDB")
+
+	// Enterprise & lateral movement parameters
+	rootCmd.Flags().StringVarP(&params.SMBPorts, "smb-ports", "", "445", "The list of TCP ports to listen on for SMB")
+	rootCmd.Flags().StringVarP(&params.WinRMPorts, "winrm-ports", "", "5985", "The list of TCP ports to listen on for WinRM (HTTP)")
+	rootCmd.Flags().StringVarP(&params.WinRMSPorts, "winrms-ports", "", "5986", "The list of TCP ports to listen on for WinRM (HTTPS)")
+	rootCmd.Flags().StringVarP(&params.KerberosPorts, "kerberos-ports", "", "88", "The list of TCP/UDP ports to listen on for Kerberos")
 
 	// Metrics parameters
 	rootCmd.Flags().BoolVarP(&params.EnableMetrics, "metrics", "", false, "Enable Prometheus metrics HTTP server")

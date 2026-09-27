@@ -179,6 +179,22 @@ func startCapture(cmd *cobra.Command, args []string) {
 		setupMongoDB(rw)
 	}
 
+	// SMB
+	if _, enabled := protocols["smb"]; enabled {
+		setupSMB(rw)
+	}
+
+	// WinRM
+	if _, enabled := protocols["winrm"]; enabled {
+		setupWinRM(rw)
+		setupWinRMS(rw)
+	}
+
+	// Kerberos
+	if _, enabled := protocols["kerberos"]; enabled {
+		setupKerberos(rw)
+	}
+
 	// Metrics HTTP server
 	if params.EnableMetrics {
 		mSrv, err := flamingo.StartMetricsServer(params.MetricsPort)
@@ -969,6 +985,104 @@ func setupMongoDB(rw *flamingo.RecordWriter) {
 				log.Fatalf("failed to start mongodb server %s:%d: %q", conf.BindHost, conf.BindPort, err)
 			} else {
 				log.Errorf("failed to start mongodb server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
+func setupSMB(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.SMBPorts)
+	if err != nil {
+		log.Fatalf("failed to process smb ports %s: %s", params.SMBPorts, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfSMB()
+		conf.BindPort = uint16(port)
+		conf.RecordWriter = rw
+		if err := flamingo.SpawnSMB(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start smb server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start smb server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
+func setupWinRM(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.WinRMPorts)
+	if err != nil {
+		log.Fatalf("failed to process winrm ports %s: %s", params.WinRMPorts, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfWinRM()
+		conf.BindPort = uint16(port)
+		conf.AuthMode = params.HTTPAuthMode
+		conf.RecordWriter = rw
+		if err := flamingo.SpawnWinRM(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start winrm server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start winrm server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
+func setupWinRMS(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.WinRMSPorts)
+	if err != nil {
+		log.Fatalf("failed to process winrms ports %s: %s", params.WinRMSPorts, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfWinRM()
+		conf.BindPort = uint16(port)
+		conf.TLS = true
+		conf.TLSCert = params.TLSCertData
+		conf.TLSKey = params.TLSKeyData
+		conf.TLSName = params.TLSName
+		conf.AuthMode = params.HTTPAuthMode
+		conf.RecordWriter = rw
+		if err := flamingo.SpawnWinRM(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start winrms server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start winrms server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
+func setupKerberos(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.KerberosPorts)
+	if err != nil {
+		log.Fatalf("failed to process kerberos ports %s: %s", params.KerberosPorts, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfKerberos()
+		conf.BindPort = uint16(port)
+		conf.RecordWriter = rw
+		if err := flamingo.SpawnKerberos(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start kerberos server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start kerberos server %s:%d: %q", conf.BindHost, conf.BindPort, err)
 			}
 			continue
 		}

@@ -47,8 +47,8 @@ securityContext:
 
 # Flamingo configuration options
 config:
-  # Comma-separated list of protocols to enable: ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet,postgres,mysql,mongodb
-  protocols: "ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet,postgres,mysql,mongodb"
+  # Comma-separated list of protocols to enable: ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet,postgres,mysql,mongodb,smb,winrm,kerberos
+  protocols: "ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet,postgres,mysql,mongodb,smb,winrm,kerberos"
 
   # Verbose / Quiet flags
   verbose: false
@@ -69,6 +69,10 @@ config:
     postgres: "5432"
     mysql: "3306"
     mongodb: "27017"
+    smb: "445"
+    winrm: "5985"
+    winrms: "5986"
+    kerberos: "88"
     dns: "53,5353"
     dnsResolveToIP: ""
     snmp: "161"
@@ -225,6 +229,31 @@ service:
       port: 27017
       targetPort: 27017
       protocol: TCP
+    smb:
+      enabled: true
+      port: 445
+      targetPort: 445
+      protocol: TCP
+    winrm:
+      enabled: true
+      port: 5985
+      targetPort: 5985
+      protocol: TCP
+    winrms:
+      enabled: true
+      port: 5986
+      targetPort: 5986
+      protocol: TCP
+    kerberosTcp:
+      enabled: true
+      port: 88
+      targetPort: 88
+      protocol: TCP
+    kerberosUdp:
+      enabled: true
+      port: 88
+      targetPort: 88
+      protocol: UDP
     ssh:
       enabled: true
       port: 22
