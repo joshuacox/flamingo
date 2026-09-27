@@ -1,0 +1,144 @@
+{{- if .Values.grafanaDashboard.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "flamingo.fullname" . }}-dashboard
+  {{- if .Values.grafanaDashboard.namespace }}
+  namespace: {{ .Values.grafanaDashboard.namespace }}
+  {{- end }}
+  labels:
+    {{- include "flamingo.labels" . | nindent 4 }}
+    {{- with .Values.grafanaDashboard.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.grafanaDashboard.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+data:
+  flamingo-dashboard.json: |-
+    {
+      "annotations": {
+        "list": []
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": null,
+      "links": [],
+      "liveNow": true,
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "red", "value": 80}
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "id": 1,
+          "options": {
+            "reduceOptions": {
+              "calcs": ["lastNotNull"],
+              "fields": "",
+              "values": false
+            }
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "sum(flamingo_credentials_captured_total)",
+              "refId": "A"
+            }
+          ],
+          "title": "Total Credentials Captured",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {
+                "hideFrom": {"legend": false, "tooltip": false, "viz": false}
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "id": 2,
+          "options": {
+            "legend": {"displayMode": "list", "placement": "right"},
+            "pieType": "pie",
+            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}
+          },
+          "targets": [
+            {
+              "expr": "sum by (proto) (flamingo_credentials_captured_total)",
+              "legendFormat": "{{`{{proto}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Credentials by Protocol",
+          "type": "piechart"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "gradientMode": "none",
+                "lineInterpolation": "smooth",
+                "lineWidth": 2
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 9, "w": 24, "x": 0, "y": 8},
+          "id": 3,
+          "options": {
+            "legend": {"displayMode": "table", "placement": "bottom"}
+          },
+          "targets": [
+            {
+              "expr": "rate(flamingo_credentials_captured_total[1m]) * 60",
+              "legendFormat": "{{`{{proto}} - {{method}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Credential Capture Rate (per min)",
+          "type": "timeseries"
+        }
+      ],
+      "refresh": "5s",
+      "schemaVersion": 38,
+      "tags": ["flamingo", "honeypot", "security"],
+      "timezone": "browser",
+      "title": "Flamingo Honeypot Analytics",
+      "version": 1
+    }
+{{- end }}

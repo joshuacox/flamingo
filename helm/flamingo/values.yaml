@@ -258,6 +258,29 @@ metrics:
     labels: {}
     annotations: {}
 
+# Grafana Dashboard ConfigMap for auto-importing into Grafana via sidecar
+grafanaDashboard:
+  enabled: false
+  namespace: ""
+  labels:
+    grafana_dashboard: "1"
+  annotations: {}
+
+# Ingress configuration for HTTP/HTTPS listener
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: flamingo.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: flamingo-tls
+  #    hosts:
+  #      - flamingo.local
+
 # NetworkPolicy configuration
 networkPolicy:
   enabled: false

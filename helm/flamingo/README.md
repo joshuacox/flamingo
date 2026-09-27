@@ -77,6 +77,8 @@ config:
 | `config.secretOutputs` | List of secret output targets stored in chart Secret | `[]` |
 | `metrics.enabled` | Enable Prometheus metrics endpoint | `true` |
 | `metrics.serviceMonitor.enabled` | Enable Prometheus Operator ServiceMonitor | `false` |
+| `grafanaDashboard.enabled` | Deploy pre-configured Grafana analytics dashboard | `false` |
+| `ingress.enabled` | Enable Kubernetes Ingress for HTTP/HTTPS listener | `false` |
 | `livenessProbe.enabled` | Enable liveness probe | `false` |
 | `readinessProbe.enabled` | Enable readiness probe | `false` |
 | `service.type` | Kubernetes service type (`ClusterIP`, `NodePort`, `LoadBalancer`) | `ClusterIP` |
