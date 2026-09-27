@@ -74,6 +74,24 @@ spec:
       protocol: {{ .Values.service.ports.telnet.protocol | default "TCP" }}
       name: telnet
     {{- end }}
+    {{- if .Values.service.ports.postgres.enabled }}
+    - port: {{ .Values.service.ports.postgres.port }}
+      targetPort: {{ .Values.service.ports.postgres.targetPort }}
+      protocol: {{ .Values.service.ports.postgres.protocol | default "TCP" }}
+      name: postgres
+    {{- end }}
+    {{- if .Values.service.ports.mysql.enabled }}
+    - port: {{ .Values.service.ports.mysql.port }}
+      targetPort: {{ .Values.service.ports.mysql.targetPort }}
+      protocol: {{ .Values.service.ports.mysql.protocol | default "TCP" }}
+      name: mysql
+    {{- end }}
+    {{- if .Values.service.ports.mongodb.enabled }}
+    - port: {{ .Values.service.ports.mongodb.port }}
+      targetPort: {{ .Values.service.ports.mongodb.targetPort }}
+      protocol: {{ .Values.service.ports.mongodb.protocol | default "TCP" }}
+      name: mongodb
+    {{- end }}
     {{- if .Values.metrics.enabled }}
     - port: {{ .Values.metrics.port }}
       targetPort: {{ .Values.metrics.port }}
@@ -207,6 +225,24 @@ spec:
       targetPort: {{ .Values.service.ports.telnet.targetPort }}
       protocol: TCP
       name: telnet
+    {{- end }}
+    {{- if .Values.service.ports.postgres.enabled }}
+    - port: {{ .Values.service.ports.postgres.port }}
+      targetPort: {{ .Values.service.ports.postgres.targetPort }}
+      protocol: TCP
+      name: postgres
+    {{- end }}
+    {{- if .Values.service.ports.mysql.enabled }}
+    - port: {{ .Values.service.ports.mysql.port }}
+      targetPort: {{ .Values.service.ports.mysql.targetPort }}
+      protocol: TCP
+      name: mysql
+    {{- end }}
+    {{- if .Values.service.ports.mongodb.enabled }}
+    - port: {{ .Values.service.ports.mongodb.port }}
+      targetPort: {{ .Values.service.ports.mongodb.targetPort }}
+      protocol: TCP
+      name: mongodb
     {{- end }}
     {{- if .Values.metrics.enabled }}
     - port: {{ .Values.metrics.port }}

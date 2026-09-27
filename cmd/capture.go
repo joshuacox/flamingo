@@ -94,6 +94,9 @@ func startCapture(cmd *cobra.Command, args []string) {
 	}
 
 	// Configure output actions
+	if len(args) == 0 && len(params.ConfigOutputs) > 0 {
+		args = params.ConfigOutputs
+	}
 	rw := setupOutput(args)
 
 	// Configure TLS certificates
@@ -159,6 +162,21 @@ func startCapture(cmd *cobra.Command, args []string) {
 	// Telnet
 	if _, enabled := protocols["telnet"]; enabled {
 		setupTelnet(rw)
+	}
+
+	// Postgres
+	if _, enabled := protocols["postgres"]; enabled {
+		setupPostgres(rw)
+	}
+
+	// MySQL
+	if _, enabled := protocols["mysql"]; enabled {
+		setupMySQL(rw)
+	}
+
+	// MongoDB
+	if _, enabled := protocols["mongodb"]; enabled {
+		setupMongoDB(rw)
 	}
 
 	// Metrics HTTP server
@@ -881,6 +899,76 @@ func setupTelnet(rw *flamingo.RecordWriter) {
 				log.Fatalf("failed to start telnet server %s:%d: %q", conf.BindHost, conf.BindPort, err)
 			} else {
 				log.Errorf("failed to start telnet server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
+func setupPostgres(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.PostgresPorts)
+	if err != nil {
+		log.Fatalf("failed to process postgres ports %s: %s", params.PostgresPorts, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfPostgres()
+		conf.BindPort = uint16(port)
+		conf.RecordWriter = rw
+		if err := flamingo.SpawnPostgres(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start postgres server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start postgres server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
+func setupMySQL(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.MySQLPorts)
+	if err != nil {
+		log.Fatalf("failed to process mysql ports %s: %s", params.MySQLPorts, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfMySQL()
+		conf.BindPort = uint16(port)
+		conf.Banner = params.MySQLBanner
+		conf.RecordWriter = rw
+		if err := flamingo.SpawnMySQL(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start mysql server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start mysql server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
+func setupMongoDB(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.MongoDBPorts)
+	if err != nil {
+		log.Fatalf("failed to process mongodb ports %s: %s", params.MongoDBPorts, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfMongoDB()
+		conf.BindPort = uint16(port)
+		conf.RecordWriter = rw
+		if err := flamingo.SpawnMongoDB(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start mongodb server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start mongodb server %s:%d: %q", conf.BindHost, conf.BindPort, err)
 			}
 			continue
 		}

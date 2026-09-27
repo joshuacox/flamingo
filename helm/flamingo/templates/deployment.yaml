@@ -85,6 +85,18 @@ spec:
             {{- if .Values.config.ports.telnet }}
             - "--telnet-ports={{ .Values.config.ports.telnet }}"
             {{- end }}
+            {{- if .Values.config.ports.postgres }}
+            - "--postgres-ports={{ .Values.config.ports.postgres }}"
+            {{- end }}
+            {{- if .Values.config.ports.mysql }}
+            - "--mysql-ports={{ .Values.config.ports.mysql }}"
+            {{- end }}
+            {{- if .Values.config.banners.mysql }}
+            - "--mysql-banner={{ .Values.config.banners.mysql }}"
+            {{- end }}
+            {{- if .Values.config.ports.mongodb }}
+            - "--mongodb-ports={{ .Values.config.ports.mongodb }}"
+            {{- end }}
             {{- if .Values.metrics.enabled }}
             - "--metrics"
             - "--metrics-port={{ .Values.metrics.port }}"
@@ -179,6 +191,21 @@ spec:
             {{- if .Values.service.ports.telnet.enabled }}
             - name: telnet
               containerPort: {{ .Values.service.ports.telnet.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.postgres.enabled }}
+            - name: postgres
+              containerPort: {{ .Values.service.ports.postgres.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.mysql.enabled }}
+            - name: mysql
+              containerPort: {{ .Values.service.ports.mysql.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.mongodb.enabled }}
+            - name: mongodb
+              containerPort: {{ .Values.service.ports.mongodb.targetPort }}
               protocol: TCP
             {{- end }}
             {{- if .Values.metrics.enabled }}

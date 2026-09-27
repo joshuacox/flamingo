@@ -47,8 +47,8 @@ securityContext:
 
 # Flamingo configuration options
 config:
-  # Comma-separated list of protocols to enable: ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet
-  protocols: "ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet"
+  # Comma-separated list of protocols to enable: ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet,postgres,mysql,mongodb
+  protocols: "ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet,postgres,mysql,mongodb"
 
   # Verbose / Quiet flags
   verbose: false
@@ -66,6 +66,9 @@ config:
     smtps: "465"
     redis: "6379"
     telnet: "23"
+    postgres: "5432"
+    mysql: "3306"
+    mongodb: "27017"
     dns: "53,5353"
     dnsResolveToIP: ""
     snmp: "161"
@@ -80,6 +83,7 @@ config:
     pop3: "+OK Flamingo POP3 server ready"
     smtp: "220 Flamingo ESMTP Service ready"
     telnet: "Flamingo Honeypot Telnet Service\r\n"
+    mysql: "8.0.35"
 
   # HTTP options
   httpRealm: "Administration"
@@ -205,6 +209,21 @@ service:
       enabled: true
       port: 23
       targetPort: 23
+      protocol: TCP
+    postgres:
+      enabled: true
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
+    mysql:
+      enabled: true
+      port: 3306
+      targetPort: 3306
+      protocol: TCP
+    mongodb:
+      enabled: true
+      port: 27017
+      targetPort: 27017
       protocol: TCP
     ssh:
       enabled: true

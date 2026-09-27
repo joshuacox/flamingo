@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/atredispartners/flamingo/pkg/flamingo"
 	"github.com/spf13/cobra"
 )
 
@@ -14,6 +15,7 @@ var ToolName = "flamingo"
 var Version = "0.0.0"
 
 type flamingoParameters struct {
+	ConfigFile         string
 	Quiet              bool
 	Verbose            bool
 	DontIgnoreFailures bool
@@ -26,6 +28,10 @@ type flamingoParameters struct {
 	SMTPSPorts         string
 	RedisPorts         string
 	TelnetPorts        string
+	PostgresPorts      string
+	MySQLPorts         string
+	MySQLBanner        string
+	MongoDBPorts       string
 	MetricsPort        uint16
 	EnableMetrics      bool
 	POP3Banner         string
@@ -49,6 +55,7 @@ type flamingoParameters struct {
 	TLSName            string
 	TLSOrgName         string
 	Protocols          string
+	ConfigOutputs      []string
 }
 
 var params = &flamingoParameters{}
@@ -58,9 +65,142 @@ var rootCmd = &cobra.Command{
 	Short: fmt.Sprintf("%s captures inbound credentials", ToolName),
 	Long:  fmt.Sprintf(`flamingo v%s`, Version),
 	Args:  cobra.ArbitraryArgs,
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		if params.ConfigFile != "" {
+			cfg, err := flamingo.LoadConfigFile(params.ConfigFile)
+			if err != nil {
+				return err
+			}
+			applyConfigFile(cmd, cfg)
+		}
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		startCapture(cmd, args)
 	},
+}
+
+func applyConfigFile(cmd *cobra.Command, cfg *flamingo.ConfigFile) {
+	if cfg.Quiet != nil && !cmd.Flags().Changed("quiet") {
+		params.Quiet = *cfg.Quiet
+	}
+	if cfg.Verbose != nil && !cmd.Flags().Changed("verbose") {
+		params.Verbose = *cfg.Verbose
+	}
+	if cfg.DontIgnoreFailures != nil && !cmd.Flags().Changed("dont-ignore") {
+		params.DontIgnoreFailures = *cfg.DontIgnoreFailures
+	}
+	if cfg.Protocols != "" && !cmd.Flags().Changed("protocols") {
+		params.Protocols = cfg.Protocols
+	}
+
+	// Ports
+	if cfg.Ports.FTP != "" && !cmd.Flags().Changed("ftp-ports") {
+		params.FTPPorts = cfg.Ports.FTP
+	}
+	if cfg.Ports.SSH != "" && !cmd.Flags().Changed("ssh-ports") {
+		params.SSHPorts = cfg.Ports.SSH
+	}
+	if cfg.Ports.DNS != "" && !cmd.Flags().Changed("dns-ports") {
+		params.DNSPorts = cfg.Ports.DNS
+	}
+	if cfg.Ports.SNMP != "" && !cmd.Flags().Changed("snmp-ports") {
+		params.SNMPPorts = cfg.Ports.SNMP
+	}
+	if cfg.Ports.LDAP != "" && !cmd.Flags().Changed("ldap-ports") {
+		params.LDAPPorts = cfg.Ports.LDAP
+	}
+	if cfg.Ports.LDAPS != "" && !cmd.Flags().Changed("ldaps-ports") {
+		params.LDAPSPorts = cfg.Ports.LDAPS
+	}
+	if cfg.Ports.HTTP != "" && !cmd.Flags().Changed("http-ports") {
+		params.HTTPPorts = cfg.Ports.HTTP
+	}
+	if cfg.Ports.HTTPS != "" && !cmd.Flags().Changed("https-ports") {
+		params.HTTPSPorts = cfg.Ports.HTTPS
+	}
+	if cfg.Ports.IMAP != "" && !cmd.Flags().Changed("imap-ports") {
+		params.IMAPPorts = cfg.Ports.IMAP
+	}
+	if cfg.Ports.IMAPS != "" && !cmd.Flags().Changed("imaps-ports") {
+		params.IMAPSPorts = cfg.Ports.IMAPS
+	}
+	if cfg.Ports.POP3 != "" && !cmd.Flags().Changed("pop3-ports") {
+		params.POP3Ports = cfg.Ports.POP3
+	}
+	if cfg.Ports.POP3S != "" && !cmd.Flags().Changed("pop3s-ports") {
+		params.POP3SPorts = cfg.Ports.POP3S
+	}
+	if cfg.Ports.SMTP != "" && !cmd.Flags().Changed("smtp-ports") {
+		params.SMTPPorts = cfg.Ports.SMTP
+	}
+	if cfg.Ports.SMTPS != "" && !cmd.Flags().Changed("smtps-ports") {
+		params.SMTPSPorts = cfg.Ports.SMTPS
+	}
+	if cfg.Ports.Redis != "" && !cmd.Flags().Changed("redis-ports") {
+		params.RedisPorts = cfg.Ports.Redis
+	}
+	if cfg.Ports.Telnet != "" && !cmd.Flags().Changed("telnet-ports") {
+		params.TelnetPorts = cfg.Ports.Telnet
+	}
+	if cfg.Ports.Postgres != "" && !cmd.Flags().Changed("postgres-ports") {
+		params.PostgresPorts = cfg.Ports.Postgres
+	}
+	if cfg.Ports.MySQL != "" && !cmd.Flags().Changed("mysql-ports") {
+		params.MySQLPorts = cfg.Ports.MySQL
+	}
+	if cfg.Ports.MongoDB != "" && !cmd.Flags().Changed("mongodb-ports") {
+		params.MongoDBPorts = cfg.Ports.MongoDB
+	}
+
+	// Banners
+	if cfg.Banners.POP3 != "" && !cmd.Flags().Changed("pop3-banner") {
+		params.POP3Banner = cfg.Banners.POP3
+	}
+	if cfg.Banners.SMTP != "" && !cmd.Flags().Changed("smtp-banner") {
+		params.SMTPBanner = cfg.Banners.SMTP
+	}
+	if cfg.Banners.Telnet != "" && !cmd.Flags().Changed("telnet-banner") {
+		params.TelnetBanner = cfg.Banners.Telnet
+	}
+	if cfg.Banners.MySQL != "" && !cmd.Flags().Changed("mysql-banner") {
+		params.MySQLBanner = cfg.Banners.MySQL
+	}
+
+	// DNS, SSH, HTTP, TLS, Metrics
+	if cfg.DNS.ResolveToIP != "" && !cmd.Flags().Changed("dns-resolve-to") {
+		params.DNSResolveToIP = cfg.DNS.ResolveToIP
+	}
+	if cfg.SSH.HostKey != "" && !cmd.Flags().Changed("ssh-host-key") {
+		params.SSHHostKey = cfg.SSH.HostKey
+	}
+	if cfg.HTTP.Realm != "" && !cmd.Flags().Changed("http-realm") {
+		params.HTTPBasicRealm = cfg.HTTP.Realm
+	}
+	if cfg.HTTP.AuthMode != "" && !cmd.Flags().Changed("http-auth-mode") {
+		params.HTTPAuthMode = cfg.HTTP.AuthMode
+	}
+	if cfg.TLS.CertFile != "" && !cmd.Flags().Changed("tls-cert") {
+		params.TLSCertFile = cfg.TLS.CertFile
+	}
+	if cfg.TLS.KeyFile != "" && !cmd.Flags().Changed("tls-key") {
+		params.TLSKeyFile = cfg.TLS.KeyFile
+	}
+	if cfg.TLS.Name != "" && !cmd.Flags().Changed("tls-name") {
+		params.TLSName = cfg.TLS.Name
+	}
+	if cfg.TLS.Org != "" && !cmd.Flags().Changed("tls-org") {
+		params.TLSOrgName = cfg.TLS.Org
+	}
+	if cfg.Metrics.Enabled != nil && !cmd.Flags().Changed("metrics") {
+		params.EnableMetrics = *cfg.Metrics.Enabled
+	}
+	if cfg.Metrics.Port != 0 && !cmd.Flags().Changed("metrics-port") {
+		params.MetricsPort = cfg.Metrics.Port
+	}
+	if len(cfg.Outputs) > 0 {
+		params.ConfigOutputs = cfg.Outputs
+	}
 }
 
 // Execute is the main entry point for this tool
@@ -72,13 +212,15 @@ func Execute() {
 }
 
 func init() {
+	// Configuration file option
+	rootCmd.PersistentFlags().StringVarP(&params.ConfigFile, "config", "c", "", "Path to YAML configuration file")
 
 	// General options
 	rootCmd.PersistentFlags().BoolVarP(&params.Verbose, "verbose", "v", false, "Display verbose output")
 	rootCmd.PersistentFlags().BoolVarP(&params.Quiet, "quiet", "q", false, "Hide startup banners and other extraneous output")
 	rootCmd.PersistentFlags().BoolVarP(&params.DontIgnoreFailures, "dont-ignore", "", false, "Treat individual listener failures as fatal")
 
-	rootCmd.Flags().StringVarP(&params.Protocols, "protocols", "", "ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet", "Specify a comma-separated list of protocols")
+	rootCmd.Flags().StringVarP(&params.Protocols, "protocols", "", "ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet,postgres,mysql,mongodb", "Specify a comma-separated list of protocols")
 
 	// SNMP parameters
 	rootCmd.Flags().StringVarP(&params.SNMPPorts, "snmp-ports", "", "161", "The list of UDP ports to listen on for SNMP")
@@ -118,6 +260,12 @@ func init() {
 	// Telnet parameters
 	rootCmd.Flags().StringVarP(&params.TelnetPorts, "telnet-ports", "", "23", "The list of TCP ports to listen on for Telnet")
 	rootCmd.Flags().StringVarP(&params.TelnetBanner, "telnet-banner", "", "Flamingo Honeypot Telnet Service\r\n", "Telnet server greeting banner")
+
+	// Database parameters
+	rootCmd.Flags().StringVarP(&params.PostgresPorts, "postgres-ports", "", "5432", "The list of TCP ports to listen on for PostgreSQL")
+	rootCmd.Flags().StringVarP(&params.MySQLPorts, "mysql-ports", "", "3306", "The list of TCP ports to listen on for MySQL")
+	rootCmd.Flags().StringVarP(&params.MySQLBanner, "mysql-banner", "", "8.0.35", "MySQL server version banner to display")
+	rootCmd.Flags().StringVarP(&params.MongoDBPorts, "mongodb-ports", "", "27017", "The list of TCP ports to listen on for MongoDB")
 
 	// Metrics parameters
 	rootCmd.Flags().BoolVarP(&params.EnableMetrics, "metrics", "", false, "Enable Prometheus metrics HTTP server")

@@ -68,7 +68,7 @@ config:
 | `image.repository` | Container image repository | `ghcr.io/joshuacox/flamingo` |
 | `image.tag` | Container image tag (defaults to `Chart.appVersion`) | `""` |
 | `securityContext.capabilities.add` | Container capabilities | `[NET_BIND_SERVICE]` |
-| `config.protocols` | Enabled protocols | `ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet` |
+| `config.protocols` | Enabled protocols | `ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet,postgres,mysql,mongodb` |
 | `config.ports.*` | Port configuration per protocol | See `values.yaml` |
 | `config.banners.*` | Deception banners per protocol | See `values.yaml` |
 | `config.sshHostKeySecret` | Name of Secret containing `id_rsa` host key | `""` |
