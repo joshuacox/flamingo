@@ -7,6 +7,7 @@ import (
 	syslog "github.com/RackSec/srslog"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"strings"
@@ -115,6 +116,17 @@ func startCapture(cmd *cobra.Command, args []string) {
 	} else {
 		rw.Enricher = enricher
 		cleanupHandlers = append(cleanupHandlers, func() { enricher.Close() })
+	}
+
+	// Configure anti-bruteforce tarpit
+	if params.TarpitThreshold > 0 {
+		flamingo.GlobalTarpit.SetThreshold(params.TarpitThreshold)
+		if delay, err := time.ParseDuration(params.TarpitDelay); err == nil && delay > 0 {
+			flamingo.GlobalTarpit.SetDelay(delay)
+		}
+		if !params.Quiet {
+			log.Infof("anti-bruteforce tarpit enabled (threshold: %d attempts/min, delay: %s)", params.TarpitThreshold, params.TarpitDelay)
+		}
 	}
 
 	// Setup protocol listeners
@@ -339,6 +351,42 @@ func setupOutput(outputs []string) *flamingo.RecordWriter {
 
 		if strings.HasPrefix(output, "loki://") {
 			writer, cleaner, err := getLokiWriter(output)
+			if err != nil {
+				log.Fatalf("failed to configure output %s: %s", output, err)
+			}
+			rw.OutputWriters = append(rw.OutputWriters, writer)
+			if cleaner != nil {
+				rw.OutputCleaners = append(rw.OutputCleaners, cleaner)
+			}
+			continue
+		}
+
+		if strings.HasPrefix(output, "splunk://") {
+			writer, cleaner, err := getSplunkWriter(output)
+			if err != nil {
+				log.Fatalf("failed to configure output %s: %s", output, err)
+			}
+			rw.OutputWriters = append(rw.OutputWriters, writer)
+			if cleaner != nil {
+				rw.OutputCleaners = append(rw.OutputCleaners, cleaner)
+			}
+			continue
+		}
+
+		if strings.HasPrefix(output, "discord://") {
+			writer, cleaner, err := getDiscordWriter(output)
+			if err != nil {
+				log.Fatalf("failed to configure output %s: %s", output, err)
+			}
+			rw.OutputWriters = append(rw.OutputWriters, writer)
+			if cleaner != nil {
+				rw.OutputCleaners = append(rw.OutputCleaners, cleaner)
+			}
+			continue
+		}
+
+		if strings.HasPrefix(output, "teams://") || strings.HasPrefix(output, "msteams://") {
+			writer, cleaner, err := getTeamsWriter(output)
 			if err != nil {
 				log.Fatalf("failed to configure output %s: %s", output, err)
 			}
@@ -1419,3 +1467,223 @@ func getLokiWriter(urlStr string) (flamingo.OutputWriter, flamingo.OutputCleaner
 		return nil
 	}, flamingo.OutputCleanerNoOp, nil
 }
+
+func getSplunkWriter(urlStr string) (flamingo.OutputWriter, flamingo.OutputCleaner, error) {
+	// Format: splunk://https://splunk-host:8088?token=HEC-TOKEN&index=honeypot
+	trimmed := strings.TrimPrefix(urlStr, "splunk://")
+	if !strings.HasPrefix(trimmed, "http://") && !strings.HasPrefix(trimmed, "https://") {
+		trimmed = "https://" + trimmed
+	}
+	parsed, err := url.Parse(trimmed)
+	if err != nil {
+		return flamingo.OutputWriterNoOp, flamingo.OutputCleanerNoOp, err
+	}
+
+	token := parsed.Query().Get("token")
+	if token == "" && parsed.User != nil {
+		token = parsed.User.Username()
+	}
+	index := parsed.Query().Get("index")
+	sourcetype := parsed.Query().Get("sourcetype")
+	if sourcetype == "" {
+		sourcetype = "flamingo:honeypot"
+	}
+
+	endpoint := parsed.Scheme + "://" + parsed.Host
+	path := parsed.Path
+	if path == "" || path == "/" {
+		path = "/services/collector/event"
+	}
+	postURL := endpoint + path
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	return func(rec map[string]string) error {
+		payload := map[string]any{
+			"time":       time.Now().Unix(),
+			"sourcetype": sourcetype,
+			"event":      rec,
+		}
+		if index != "" {
+			payload["index"] = index
+		}
+		body, err := json.Marshal(payload)
+		if err != nil {
+			return err
+		}
+		req, err := http.NewRequest(http.MethodPost, postURL, bytes.NewBuffer(body))
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Content-Type", "application/json")
+		if token != "" {
+			req.Header.Set("Authorization", "Splunk "+token)
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode < 200 || resp.StatusCode > 299 {
+			return fmt.Errorf("splunk HEC write error HTTP %d", resp.StatusCode)
+		}
+		return nil
+	}, flamingo.OutputCleanerNoOp, nil
+}
+
+func getDiscordWriter(urlStr string) (flamingo.OutputWriter, flamingo.OutputCleaner, error) {
+	// Format: discord://https://discord.com/api/webhooks/...
+	trimmed := strings.TrimPrefix(urlStr, "discord://")
+	if !strings.HasPrefix(trimmed, "http://") && !strings.HasPrefix(trimmed, "https://") {
+		trimmed = "https://" + trimmed
+	}
+	postURL := trimmed
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	return func(rec map[string]string) error {
+		proto := rec["_proto"]
+		if proto == "" {
+			proto = "honeypot"
+		}
+		host := rec["_host"]
+		rtype := rec["_type"]
+
+		fields := []map[string]any{
+			{"name": "Protocol", "value": proto, "inline": true},
+			{"name": "Event Type", "value": rtype, "inline": true},
+			{"name": "Source IP", "value": host, "inline": true},
+		}
+
+		for _, k := range []string{"username", "password", "hash", "honeyfile", "path", "command", "image", "tor", "scanner", "country", "asn"} {
+			if val, ok := rec[k]; ok && val != "" {
+				displayVal := val
+				if len(displayVal) > 100 {
+					displayVal = displayVal[:97] + "..."
+				}
+				fields = append(fields, map[string]any{
+					"name":   strings.ToUpper(k[:1]) + k[1:],
+					"value":  displayVal,
+					"inline": true,
+				})
+			}
+		}
+
+		color := 0xe74c3c // red for credential/honeyfile
+		if rtype == "access" {
+			color = 0x3498db // blue for access
+		}
+
+		payload := map[string]any{
+			"embeds": []map[string]any{
+				{
+					"title":     fmt.Sprintf("🦩 Flamingo Alert: %s (%s)", proto, rtype),
+					"color":     color,
+					"fields":    fields,
+					"timestamp": time.Now().UTC().Format(time.RFC3339),
+					"footer": map[string]string{
+						"text": "Flamingo Deception Platform",
+					},
+				},
+			},
+		}
+
+		body, err := json.Marshal(payload)
+		if err != nil {
+			return err
+		}
+
+		req, err := http.NewRequest(http.MethodPost, postURL, bytes.NewBuffer(body))
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := client.Do(req)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode < 200 || resp.StatusCode > 299 {
+			return fmt.Errorf("discord webhook write error HTTP %d", resp.StatusCode)
+		}
+		return nil
+	}, flamingo.OutputCleanerNoOp, nil
+}
+
+func getTeamsWriter(urlStr string) (flamingo.OutputWriter, flamingo.OutputCleaner, error) {
+	// Format: teams://https://outlook.office.com/webhook/... or msteams://...
+	trimmed := strings.TrimPrefix(urlStr, "teams://")
+	trimmed = strings.TrimPrefix(trimmed, "msteams://")
+	if !strings.HasPrefix(trimmed, "http://") && !strings.HasPrefix(trimmed, "https://") {
+		trimmed = "https://" + trimmed
+	}
+	postURL := trimmed
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	return func(rec map[string]string) error {
+		proto := rec["_proto"]
+		if proto == "" {
+			proto = "honeypot"
+		}
+		host := rec["_host"]
+		rtype := rec["_type"]
+
+		facts := []map[string]string{
+			{"name": "Protocol:", "value": proto},
+			{"name": "Event Type:", "value": rtype},
+			{"name": "Source IP:", "value": host},
+		}
+
+		for _, k := range []string{"username", "password", "hash", "honeyfile", "path", "command", "image", "tor", "scanner", "country", "asn"} {
+			if val, ok := rec[k]; ok && val != "" {
+				displayVal := val
+				if len(displayVal) > 100 {
+					displayVal = displayVal[:97] + "..."
+				}
+				facts = append(facts, map[string]string{
+					"name":  strings.ToUpper(k[:1]) + k[1:] + ":",
+					"value": displayVal,
+				})
+			}
+		}
+
+		themeColor := "D63384"
+		if rtype == "credential" || rtype == "honeyfile" {
+			themeColor = "DC3545"
+		}
+
+		payload := map[string]any{
+			"@type":      "MessageCard",
+			"@context":   "http://schema.org/extensions",
+			"themeColor": themeColor,
+			"summary":    fmt.Sprintf("Flamingo Alert: %s from %s", proto, host),
+			"sections": []map[string]any{
+				{
+					"activityTitle":    fmt.Sprintf("🦩 Flamingo Deception Alert: %s", proto),
+					"activitySubtitle": fmt.Sprintf("Event: %s | Time: %s", rtype, time.Now().UTC().Format(time.RFC3339)),
+					"facts":            facts,
+					"markdown":         true,
+				},
+			},
+		}
+
+		body, err := json.Marshal(payload)
+		if err != nil {
+			return err
+		}
+
+		req, err := http.NewRequest(http.MethodPost, postURL, bytes.NewBuffer(body))
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := client.Do(req)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode < 200 || resp.StatusCode > 299 {
+			return fmt.Errorf("teams webhook write error HTTP %d", resp.StatusCode)
+		}
+		return nil
+	}, flamingo.OutputCleanerNoOp, nil
+}
+

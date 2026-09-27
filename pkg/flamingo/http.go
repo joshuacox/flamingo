@@ -122,6 +122,16 @@ func startHTTP(c *ConfHTTP) {
 
 func httpHandler(c *ConfHTTP) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		GlobalTarpit.Delay(r.RemoteAddr)
+
+		pname := "http"
+		if c.TLS {
+			pname = "https"
+		}
+
+		if ServeHoneyfile(w, r, c.RecordWriter, pname) {
+			return
+		}
 
 		switch c.AuthMode {
 		case "ntlm":
@@ -132,11 +142,6 @@ func httpHandler(c *ConfHTTP) http.HandlerFunc {
 			if httpHandleBasicAuth(c, w, r) {
 				return
 			}
-		}
-
-		pname := "http"
-		if c.TLS {
-			pname = "https"
 		}
 
 		c.RecordWriter.Record(

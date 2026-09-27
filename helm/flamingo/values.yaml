@@ -116,16 +116,32 @@ config:
   #   - "/var/log/flamingo/creds.log"
   #   - "https://webhook.site/..."
   #   - "syslog:udp:syslog-server:514"
+  #   - "es://http://elasticsearch:9200/flamingo"
+  #   - "loki://http://loki:3100"
+  #   - "splunk://https://splunk.corp:8088?token=HEC_TOKEN"
+  #   - "discord://https://discord.com/api/webhooks/ID/TOKEN"
+  #   - "teams://https://outlook.office.com/webhook/..."
   outputs:
     - "stdout"
 
   # Sensitive outputs to store in a chart-managed Kubernetes Secret and pass as args
   # Examples:
   #   - "https://hooks.slack.com/services/T00/B00/XXXX"
+  #   - "splunk://https://splunk.corp:8088?token=SECRET_HEC_TOKEN"
+  #   - "discord://https://discord.com/api/webhooks/ID/TOKEN"
+  #   - "teams://https://outlook.office.com/webhook/..."
   secretOutputs: []
 
   # Existing secret name containing outputs (keys will be passed as args)
   existingOutputsSecret: ""
+
+# Deception & Anti-Bruteforce Tarpit
+tarpit:
+  enabled: false
+  # Max connection/request attempts per minute before delay kicks in (0 = disabled)
+  threshold: 10
+  # Duration to stall attacker requests (e.g. 3s, 5s)
+  delay: "3s"
 
 # Threat Intelligence & Enrichment options
 enrichment:

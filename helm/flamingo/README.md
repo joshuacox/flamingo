@@ -74,8 +74,11 @@ config:
 | `config.banners.*` | Deception banners per protocol | See `values.yaml` |
 | `config.sshHostKeySecret` | Name of Secret containing `id_rsa` host key | `""` |
 | `config.customTlsSecret` | Name of Secret containing `tls.crt` and `tls.key` | `""` |
-| `config.outputs` | Plaintext output targets (stdout, syslog, webhook, es://, loki://) | `["stdout"]` |
+| `config.outputs` | Plaintext output targets (stdout, syslog, webhook, es://, loki://, splunk://, discord://, teams://) | `["stdout"]` |
 | `config.secretOutputs` | List of secret output targets stored in chart Secret | `[]` |
+| `tarpit.enabled` | Enable anti-bruteforce connection / request tarpit | `false` |
+| `tarpit.threshold` | Max attempts per minute before tarpit activates | `10` |
+| `tarpit.delay` | Artificial delay duration for throttled attackers | `3s` |
 | `metrics.enabled` | Enable Prometheus metrics endpoint | `true` |
 | `metrics.serviceMonitor.enabled` | Enable Prometheus Operator ServiceMonitor | `false` |
 | `grafanaDashboard.enabled` | Deploy pre-configured Grafana analytics dashboard | `false` |
@@ -91,3 +94,4 @@ config:
 | `enrichment.enableRdns` | Enable reverse DNS PTR lookups | `false` |
 | `enrichment.torList` | Path to custom Tor exit nodes list | `""` |
 | `enrichment.scannerList` | Path to custom scanner CIDRs list | `""` |
+

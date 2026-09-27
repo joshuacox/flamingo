@@ -72,6 +72,8 @@ type flamingoParameters struct {
 	EnableRDNS         bool
 	TorList            string
 	ScannerList        string
+	TarpitThreshold    int
+	TarpitDelay        string
 }
 
 var params = &flamingoParameters{}
@@ -267,6 +269,14 @@ func applyConfigFile(cmd *cobra.Command, cfg *flamingo.ConfigFile) {
 	if cfg.Enrichment.ScannerList != "" && !cmd.Flags().Changed("scanner-list") {
 		params.ScannerList = cfg.Enrichment.ScannerList
 	}
+
+	// Anti-bruteforce tarpit
+	if cfg.Tarpit.Threshold != nil && !cmd.Flags().Changed("tarpit-threshold") {
+		params.TarpitThreshold = *cfg.Tarpit.Threshold
+	}
+	if cfg.Tarpit.Delay != "" && !cmd.Flags().Changed("tarpit-delay") {
+		params.TarpitDelay = cfg.Tarpit.Delay
+	}
 }
 
 // Execute is the main entry point for this tool
@@ -367,4 +377,8 @@ func init() {
 	rootCmd.Flags().BoolVarP(&params.EnableRDNS, "enable-rdns", "", false, "Enable non-blocking reverse DNS lookups for client IP addresses")
 	rootCmd.Flags().StringVarP(&params.TorList, "tor-list", "", "", "Optional path to custom list of Tor exit node IP addresses")
 	rootCmd.Flags().StringVarP(&params.ScannerList, "scanner-list", "", "", "Optional path to custom list of scanner CIDR ranges and tags")
+
+	// Deception & hardening parameters
+	rootCmd.Flags().IntVarP(&params.TarpitThreshold, "tarpit-threshold", "", 0, "Max connection/request attempts per minute from an IP before tarpit delay (0 = disabled)")
+	rootCmd.Flags().StringVarP(&params.TarpitDelay, "tarpit-delay", "", "3s", "Duration to delay tarpitted requests (e.g. 3s, 5s)")
 }

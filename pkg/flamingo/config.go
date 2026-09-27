@@ -22,6 +22,12 @@ type ConfigFile struct {
 	SSH                ConfigSSH     `yaml:"ssh,omitempty"`
 	Metrics            ConfigMetrics    `yaml:"metrics,omitempty"`
 	Enrichment         ConfigEnrichment `yaml:"enrichment,omitempty"`
+	Tarpit             ConfigTarpit     `yaml:"tarpit,omitempty"`
+}
+
+type ConfigTarpit struct {
+	Threshold *int   `yaml:"threshold,omitempty"`
+	Delay     string `yaml:"delay,omitempty"`
 }
 
 type ConfigPorts struct {
