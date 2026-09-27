@@ -139,6 +139,36 @@ func startCapture(cmd *cobra.Command, args []string) {
 		setupIMAPS(rw)
 	}
 
+	// POP3/POP3S
+	if _, enabled := protocols["pop3"]; enabled {
+		setupPOP3(rw)
+		setupPOP3S(rw)
+	}
+
+	// SMTP/SMTPS
+	if _, enabled := protocols["smtp"]; enabled {
+		setupSMTP(rw)
+		setupSMTPS(rw)
+	}
+
+	// Redis
+	if _, enabled := protocols["redis"]; enabled {
+		setupRedis(rw)
+	}
+
+	// Telnet
+	if _, enabled := protocols["telnet"]; enabled {
+		setupTelnet(rw)
+	}
+
+	// Metrics HTTP server
+	if params.EnableMetrics {
+		mSrv, err := flamingo.StartMetricsServer(params.MetricsPort)
+		if err == nil && mSrv != nil {
+			cleanupHandlers = append(cleanupHandlers, func() { _ = mSrv.Close() })
+		}
+	}
+
 	// Make sure at least one capture is running
 	if protocolCount == 0 {
 		log.Fatalf("at least one protocol must be enabled")
@@ -209,6 +239,30 @@ func setupOutput(outputs []string) *flamingo.RecordWriter {
 
 		if strings.HasPrefix(output, "syslog:") || output == "syslog" {
 			writer, cleaner, err := getSyslogWriter(output)
+			if err != nil {
+				log.Fatalf("failed to configure output %s: %s", output, err)
+			}
+			rw.OutputWriters = append(rw.OutputWriters, writer)
+			if cleaner != nil {
+				rw.OutputCleaners = append(rw.OutputCleaners, cleaner)
+			}
+			continue
+		}
+
+		if strings.HasPrefix(output, "es://") || strings.HasPrefix(output, "elasticsearch://") {
+			writer, cleaner, err := getElasticsearchWriter(output)
+			if err != nil {
+				log.Fatalf("failed to configure output %s: %s", output, err)
+			}
+			rw.OutputWriters = append(rw.OutputWriters, writer)
+			if cleaner != nil {
+				rw.OutputCleaners = append(rw.OutputCleaners, cleaner)
+			}
+			continue
+		}
+
+		if strings.HasPrefix(output, "loki://") {
+			writer, cleaner, err := getLokiWriter(output)
 			if err != nil {
 				log.Fatalf("failed to configure output %s: %s", output, err)
 			}
@@ -676,6 +730,165 @@ func setupIMAPS(rw *flamingo.RecordWriter) {
 	}
 }
 
+func setupPOP3(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.POP3Ports)
+	if err != nil {
+		log.Fatalf("failed to process pop3 ports %s: %s", params.POP3Ports, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfPOP3()
+		conf.BindPort = uint16(port)
+		conf.Banner = params.POP3Banner
+		conf.RecordWriter = rw
+		conf.TLS = false
+		conf.TLSCert = params.TLSCertData
+		conf.TLSKey = params.TLSKeyData
+		conf.TLSName = params.TLSName
+		if err := flamingo.SpawnPOP3(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start pop3 server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start pop3 server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
+func setupPOP3S(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.POP3SPorts)
+	if err != nil {
+		log.Fatalf("failed to process pop3s ports %s: %s", params.POP3SPorts, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfPOP3()
+		conf.BindPort = uint16(port)
+		conf.Banner = params.POP3Banner
+		conf.RecordWriter = rw
+		conf.TLS = true
+		conf.TLSCert = params.TLSCertData
+		conf.TLSKey = params.TLSKeyData
+		conf.TLSName = params.TLSName
+		if err := flamingo.SpawnPOP3(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start pop3s server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start pop3s server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
+func setupSMTP(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.SMTPPorts)
+	if err != nil {
+		log.Fatalf("failed to process smtp ports %s: %s", params.SMTPPorts, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfSMTP()
+		conf.BindPort = uint16(port)
+		conf.Banner = params.SMTPBanner
+		conf.RecordWriter = rw
+		conf.TLS = false
+		conf.TLSCert = params.TLSCertData
+		conf.TLSKey = params.TLSKeyData
+		conf.TLSName = params.TLSName
+		if err := flamingo.SpawnSMTP(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start smtp server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start smtp server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
+func setupSMTPS(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.SMTPSPorts)
+	if err != nil {
+		log.Fatalf("failed to process smtps ports %s: %s", params.SMTPSPorts, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfSMTP()
+		conf.BindPort = uint16(port)
+		conf.Banner = params.SMTPBanner
+		conf.RecordWriter = rw
+		conf.TLS = true
+		conf.TLSCert = params.TLSCertData
+		conf.TLSKey = params.TLSKeyData
+		conf.TLSName = params.TLSName
+		if err := flamingo.SpawnSMTP(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start smtps server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start smtps server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
+func setupRedis(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.RedisPorts)
+	if err != nil {
+		log.Fatalf("failed to process redis ports %s: %s", params.RedisPorts, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfRedis()
+		conf.BindPort = uint16(port)
+		conf.RecordWriter = rw
+		if err := flamingo.SpawnRedis(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start redis server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start redis server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
+func setupTelnet(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.TelnetPorts)
+	if err != nil {
+		log.Fatalf("failed to process telnet ports %s: %s", params.TelnetPorts, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfTelnet()
+		conf.BindPort = uint16(port)
+		conf.Banner = params.TelnetBanner
+		conf.RecordWriter = rw
+		if err := flamingo.SpawnTelnet(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start telnet server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start telnet server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
 func sendWebhook(url string, msg string) error {
 	body, _ := json.Marshal(map[string]string{"text": msg})
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(body))
@@ -697,4 +910,95 @@ func sendWebhook(url string, msg string) error {
 	}
 
 	return nil
+}
+
+func getElasticsearchWriter(urlStr string) (flamingo.OutputWriter, flamingo.OutputCleaner, error) {
+	// Format: es://http://host:9200/index or es://https://user:pass@host:9200/index
+	trimmed := strings.TrimPrefix(urlStr, "es://")
+	trimmed = strings.TrimPrefix(trimmed, "elasticsearch://")
+	if !strings.HasPrefix(trimmed, "http://") && !strings.HasPrefix(trimmed, "https://") {
+		trimmed = "http://" + trimmed
+	}
+	if !strings.HasSuffix(trimmed, "/_doc") {
+		trimmed = strings.TrimRight(trimmed, "/") + "/_doc"
+	}
+
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	return func(rec map[string]string) error {
+		body, err := json.Marshal(rec)
+		if err != nil {
+			return err
+		}
+		req, err := http.NewRequest(http.MethodPost, trimmed, bytes.NewBuffer(body))
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := client.Do(req)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode < 200 || resp.StatusCode > 299 {
+			return fmt.Errorf("elasticsearch write error HTTP %d", resp.StatusCode)
+		}
+		return nil
+	}, flamingo.OutputCleanerNoOp, nil
+}
+
+func getLokiWriter(urlStr string) (flamingo.OutputWriter, flamingo.OutputCleaner, error) {
+	// Format: loki://http://loki:3100
+	trimmed := strings.TrimPrefix(urlStr, "loki://")
+	if !strings.HasPrefix(trimmed, "http://") && !strings.HasPrefix(trimmed, "https://") {
+		trimmed = "http://" + trimmed
+	}
+	pushURL := strings.TrimRight(trimmed, "/") + "/loki/api/v1/push"
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	return func(rec map[string]string) error {
+		line, err := json.Marshal(rec)
+		if err != nil {
+			return err
+		}
+
+		proto := rec["_proto"]
+		if proto == "" {
+			proto = "unknown"
+		}
+
+		payload := map[string]any{
+			"streams": []map[string]any{
+				{
+					"stream": map[string]string{
+						"app":   "flamingo",
+						"proto": proto,
+					},
+					"values": [][]string{
+						{fmt.Sprintf("%d", time.Now().UnixNano()), string(line)},
+					},
+				},
+			},
+		}
+
+		body, err := json.Marshal(payload)
+		if err != nil {
+			return err
+		}
+
+		req, err := http.NewRequest(http.MethodPost, pushURL, bytes.NewBuffer(body))
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := client.Do(req)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode < 200 || resp.StatusCode > 299 {
+			return fmt.Errorf("loki write error HTTP %d", resp.StatusCode)
+		}
+		return nil
+	}, flamingo.OutputCleanerNoOp, nil
 }

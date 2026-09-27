@@ -57,6 +57,11 @@ func (r *RecordWriter) Record(rtype string, proto string, source string, params 
 		rec[k] = v
 	}
 
+	IncrementConnections(proto)
+	if rtype == "credential" {
+		IncrementCredentialsCaptured(proto, params["method"])
+	}
+
 	r.m.Lock()
 	defer r.m.Unlock()
 	if !r.outputChanOpen {

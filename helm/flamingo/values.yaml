@@ -47,8 +47,8 @@ securityContext:
 
 # Flamingo configuration options
 config:
-  # Comma-separated list of protocols to enable: ssh,snmp,ldap,http,dns,ftp,imap
-  protocols: "ssh,snmp,ldap,http,dns,ftp,imap"
+  # Comma-separated list of protocols to enable: ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet
+  protocols: "ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet"
 
   # Verbose / Quiet flags
   verbose: false
@@ -60,6 +60,12 @@ config:
     ftp: "21"
     imap: "143"
     imaps: "993"
+    pop3: "110"
+    pop3s: "995"
+    smtp: "25,587"
+    smtps: "465"
+    redis: "6379"
+    telnet: "23"
     dns: "53,5353"
     dnsResolveToIP: ""
     snmp: "161"
@@ -68,6 +74,12 @@ config:
     ldaps: "636"
     http: "80"
     https: "443"
+
+  # Deception banners
+  banners:
+    pop3: "+OK Flamingo POP3 server ready"
+    smtp: "220 Flamingo ESMTP Service ready"
+    telnet: "Flamingo Honeypot Telnet Service\r\n"
 
   # HTTP options
   httpRealm: "Administration"
@@ -159,6 +171,41 @@ service:
       port: 993
       targetPort: 993
       protocol: TCP
+    pop3:
+      enabled: true
+      port: 110
+      targetPort: 110
+      protocol: TCP
+    pop3s:
+      enabled: true
+      port: 995
+      targetPort: 995
+      protocol: TCP
+    smtp:
+      enabled: true
+      port: 25
+      targetPort: 25
+      protocol: TCP
+    smtpSubmission:
+      enabled: true
+      port: 587
+      targetPort: 587
+      protocol: TCP
+    smtps:
+      enabled: true
+      port: 465
+      targetPort: 465
+      protocol: TCP
+    redis:
+      enabled: true
+      port: 6379
+      targetPort: 6379
+      protocol: TCP
+    telnet:
+      enabled: true
+      port: 23
+      targetPort: 23
+      protocol: TCP
     ssh:
       enabled: true
       port: 22
@@ -199,6 +246,17 @@ service:
       port: 636
       targetPort: 636
       protocol: TCP
+
+# Metrics & Monitoring configuration
+metrics:
+  enabled: true
+  port: 9090
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    labels: {}
+    annotations: {}
 
 # NetworkPolicy configuration
 networkPolicy:

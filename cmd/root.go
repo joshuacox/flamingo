@@ -20,6 +20,17 @@ type flamingoParameters struct {
 	FTPPorts           string
 	IMAPPorts          string
 	IMAPSPorts         string
+	POP3Ports          string
+	POP3SPorts         string
+	SMTPPorts          string
+	SMTPSPorts         string
+	RedisPorts         string
+	TelnetPorts        string
+	MetricsPort        uint16
+	EnableMetrics      bool
+	POP3Banner         string
+	SMTPBanner         string
+	TelnetBanner       string
 	DNSPorts           string
 	DNSResolveToIP     string
 	SNMPPorts          string
@@ -67,7 +78,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&params.Quiet, "quiet", "q", false, "Hide startup banners and other extraneous output")
 	rootCmd.PersistentFlags().BoolVarP(&params.DontIgnoreFailures, "dont-ignore", "", false, "Treat individual listener failures as fatal")
 
-	rootCmd.Flags().StringVarP(&params.Protocols, "protocols", "", "ssh,snmp,ldap,http,dns,ftp,imap", "Specify a comma-separated list of protocols")
+	rootCmd.Flags().StringVarP(&params.Protocols, "protocols", "", "ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet", "Specify a comma-separated list of protocols")
 
 	// SNMP parameters
 	rootCmd.Flags().StringVarP(&params.SNMPPorts, "snmp-ports", "", "161", "The list of UDP ports to listen on for SNMP")
@@ -90,6 +101,27 @@ func init() {
 	// IMAP(S) parameters
 	rootCmd.Flags().StringVarP(&params.IMAPPorts, "imap-ports", "", "143", "The list of TCP ports to listen on for IMAP")
 	rootCmd.Flags().StringVarP(&params.IMAPSPorts, "imaps-ports", "", "993", "The list of TCP ports to listen on for IMAPS")
+
+	// POP3(S) parameters
+	rootCmd.Flags().StringVarP(&params.POP3Ports, "pop3-ports", "", "110", "The list of TCP ports to listen on for POP3")
+	rootCmd.Flags().StringVarP(&params.POP3SPorts, "pop3s-ports", "", "995", "The list of TCP ports to listen on for POP3S")
+	rootCmd.Flags().StringVarP(&params.POP3Banner, "pop3-banner", "", "+OK Flamingo POP3 server ready", "POP3 server greeting banner")
+
+	// SMTP(S) parameters
+	rootCmd.Flags().StringVarP(&params.SMTPPorts, "smtp-ports", "", "25,587", "The list of TCP ports to listen on for SMTP")
+	rootCmd.Flags().StringVarP(&params.SMTPSPorts, "smtps-ports", "", "465", "The list of TCP ports to listen on for SMTPS")
+	rootCmd.Flags().StringVarP(&params.SMTPBanner, "smtp-banner", "", "220 Flamingo ESMTP Service ready", "SMTP server greeting banner")
+
+	// Redis parameters
+	rootCmd.Flags().StringVarP(&params.RedisPorts, "redis-ports", "", "6379", "The list of TCP ports to listen on for Redis")
+
+	// Telnet parameters
+	rootCmd.Flags().StringVarP(&params.TelnetPorts, "telnet-ports", "", "23", "The list of TCP ports to listen on for Telnet")
+	rootCmd.Flags().StringVarP(&params.TelnetBanner, "telnet-banner", "", "Flamingo Honeypot Telnet Service\r\n", "Telnet server greeting banner")
+
+	// Metrics parameters
+	rootCmd.Flags().BoolVarP(&params.EnableMetrics, "metrics", "", false, "Enable Prometheus metrics HTTP server")
+	rootCmd.Flags().Uint16VarP(&params.MetricsPort, "metrics-port", "", 9090, "Port for Prometheus metrics HTTP server")
 
 	// HTTP(S) parameters
 	rootCmd.Flags().StringVarP(&params.HTTPPorts, "http-ports", "", "80", "The list of TCP ports to listen on for HTTP")

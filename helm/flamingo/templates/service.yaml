@@ -32,6 +32,54 @@ spec:
       protocol: {{ .Values.service.ports.imaps.protocol | default "TCP" }}
       name: imaps
     {{- end }}
+    {{- if .Values.service.ports.pop3.enabled }}
+    - port: {{ .Values.service.ports.pop3.port }}
+      targetPort: {{ .Values.service.ports.pop3.targetPort }}
+      protocol: {{ .Values.service.ports.pop3.protocol | default "TCP" }}
+      name: pop3
+    {{- end }}
+    {{- if .Values.service.ports.pop3s.enabled }}
+    - port: {{ .Values.service.ports.pop3s.port }}
+      targetPort: {{ .Values.service.ports.pop3s.targetPort }}
+      protocol: {{ .Values.service.ports.pop3s.protocol | default "TCP" }}
+      name: pop3s
+    {{- end }}
+    {{- if .Values.service.ports.smtp.enabled }}
+    - port: {{ .Values.service.ports.smtp.port }}
+      targetPort: {{ .Values.service.ports.smtp.targetPort }}
+      protocol: {{ .Values.service.ports.smtp.protocol | default "TCP" }}
+      name: smtp
+    {{- end }}
+    {{- if .Values.service.ports.smtpSubmission.enabled }}
+    - port: {{ .Values.service.ports.smtpSubmission.port }}
+      targetPort: {{ .Values.service.ports.smtpSubmission.targetPort }}
+      protocol: {{ .Values.service.ports.smtpSubmission.protocol | default "TCP" }}
+      name: smtp-submission
+    {{- end }}
+    {{- if .Values.service.ports.smtps.enabled }}
+    - port: {{ .Values.service.ports.smtps.port }}
+      targetPort: {{ .Values.service.ports.smtps.targetPort }}
+      protocol: {{ .Values.service.ports.smtps.protocol | default "TCP" }}
+      name: smtps
+    {{- end }}
+    {{- if .Values.service.ports.redis.enabled }}
+    - port: {{ .Values.service.ports.redis.port }}
+      targetPort: {{ .Values.service.ports.redis.targetPort }}
+      protocol: {{ .Values.service.ports.redis.protocol | default "TCP" }}
+      name: redis
+    {{- end }}
+    {{- if .Values.service.ports.telnet.enabled }}
+    - port: {{ .Values.service.ports.telnet.port }}
+      targetPort: {{ .Values.service.ports.telnet.targetPort }}
+      protocol: {{ .Values.service.ports.telnet.protocol | default "TCP" }}
+      name: telnet
+    {{- end }}
+    {{- if .Values.metrics.enabled }}
+    - port: {{ .Values.metrics.port }}
+      targetPort: {{ .Values.metrics.port }}
+      protocol: TCP
+      name: metrics
+    {{- end }}
     {{- if .Values.service.ports.ssh.enabled }}
     - port: {{ .Values.service.ports.ssh.port }}
       targetPort: {{ .Values.service.ports.ssh.targetPort }}
@@ -117,6 +165,54 @@ spec:
       targetPort: {{ .Values.service.ports.imaps.targetPort }}
       protocol: TCP
       name: imaps
+    {{- end }}
+    {{- if .Values.service.ports.pop3.enabled }}
+    - port: {{ .Values.service.ports.pop3.port }}
+      targetPort: {{ .Values.service.ports.pop3.targetPort }}
+      protocol: TCP
+      name: pop3
+    {{- end }}
+    {{- if .Values.service.ports.pop3s.enabled }}
+    - port: {{ .Values.service.ports.pop3s.port }}
+      targetPort: {{ .Values.service.ports.pop3s.targetPort }}
+      protocol: TCP
+      name: pop3s
+    {{- end }}
+    {{- if .Values.service.ports.smtp.enabled }}
+    - port: {{ .Values.service.ports.smtp.port }}
+      targetPort: {{ .Values.service.ports.smtp.targetPort }}
+      protocol: TCP
+      name: smtp
+    {{- end }}
+    {{- if .Values.service.ports.smtpSubmission.enabled }}
+    - port: {{ .Values.service.ports.smtpSubmission.port }}
+      targetPort: {{ .Values.service.ports.smtpSubmission.targetPort }}
+      protocol: TCP
+      name: smtp-submission
+    {{- end }}
+    {{- if .Values.service.ports.smtps.enabled }}
+    - port: {{ .Values.service.ports.smtps.port }}
+      targetPort: {{ .Values.service.ports.smtps.targetPort }}
+      protocol: TCP
+      name: smtps
+    {{- end }}
+    {{- if .Values.service.ports.redis.enabled }}
+    - port: {{ .Values.service.ports.redis.port }}
+      targetPort: {{ .Values.service.ports.redis.targetPort }}
+      protocol: TCP
+      name: redis
+    {{- end }}
+    {{- if .Values.service.ports.telnet.enabled }}
+    - port: {{ .Values.service.ports.telnet.port }}
+      targetPort: {{ .Values.service.ports.telnet.targetPort }}
+      protocol: TCP
+      name: telnet
+    {{- end }}
+    {{- if .Values.metrics.enabled }}
+    - port: {{ .Values.metrics.port }}
+      targetPort: {{ .Values.metrics.port }}
+      protocol: TCP
+      name: metrics
     {{- end }}
     {{- if .Values.service.ports.ssh.enabled }}
     - port: {{ .Values.service.ports.ssh.port }}

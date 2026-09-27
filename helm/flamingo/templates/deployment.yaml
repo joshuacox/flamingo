@@ -67,6 +67,28 @@ spec:
             {{- if .Values.config.ports.imaps }}
             - "--imaps-ports={{ .Values.config.ports.imaps }}"
             {{- end }}
+            {{- if .Values.config.ports.pop3 }}
+            - "--pop3-ports={{ .Values.config.ports.pop3 }}"
+            {{- end }}
+            {{- if .Values.config.ports.pop3s }}
+            - "--pop3s-ports={{ .Values.config.ports.pop3s }}"
+            {{- end }}
+            {{- if .Values.config.ports.smtp }}
+            - "--smtp-ports={{ .Values.config.ports.smtp }}"
+            {{- end }}
+            {{- if .Values.config.ports.smtps }}
+            - "--smtps-ports={{ .Values.config.ports.smtps }}"
+            {{- end }}
+            {{- if .Values.config.ports.redis }}
+            - "--redis-ports={{ .Values.config.ports.redis }}"
+            {{- end }}
+            {{- if .Values.config.ports.telnet }}
+            - "--telnet-ports={{ .Values.config.ports.telnet }}"
+            {{- end }}
+            {{- if .Values.metrics.enabled }}
+            - "--metrics"
+            - "--metrics-port={{ .Values.metrics.port }}"
+            {{- end }}
             {{- if .Values.config.ports.dns }}
             - "--dns-ports={{ .Values.config.ports.dns }}"
             {{- end }}
@@ -127,6 +149,41 @@ spec:
             {{- if .Values.service.ports.imaps.enabled }}
             - name: imaps
               containerPort: {{ .Values.service.ports.imaps.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.pop3.enabled }}
+            - name: pop3
+              containerPort: {{ .Values.service.ports.pop3.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.pop3s.enabled }}
+            - name: pop3s
+              containerPort: {{ .Values.service.ports.pop3s.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.smtp.enabled }}
+            - name: smtp
+              containerPort: {{ .Values.service.ports.smtp.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.smtps.enabled }}
+            - name: smtps
+              containerPort: {{ .Values.service.ports.smtps.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.redis.enabled }}
+            - name: redis
+              containerPort: {{ .Values.service.ports.redis.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.telnet.enabled }}
+            - name: telnet
+              containerPort: {{ .Values.service.ports.telnet.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.metrics.enabled }}
+            - name: metrics
+              containerPort: {{ .Values.metrics.port }}
               protocol: TCP
             {{- end }}
             {{- if .Values.service.ports.ssh.enabled }}
