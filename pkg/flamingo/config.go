@@ -43,10 +43,17 @@ type ConfigPorts struct {
 	Postgres string `yaml:"postgres,omitempty"`
 	MySQL    string `yaml:"mysql,omitempty"`
 	MongoDB  string `yaml:"mongodb,omitempty"`
-	SMB      string `yaml:"smb,omitempty"`
-	WinRM    string `yaml:"winrm,omitempty"`
-	WinRMS   string `yaml:"winrms,omitempty"`
-	Kerberos string `yaml:"kerberos,omitempty"`
+	SMB       string `yaml:"smb,omitempty"`
+	WinRM     string `yaml:"winrm,omitempty"`
+	WinRMS    string `yaml:"winrms,omitempty"`
+	Kerberos  string `yaml:"kerberos,omitempty"`
+	Docker    string `yaml:"docker,omitempty"`
+	DockerTLS string `yaml:"dockertls,omitempty"`
+	Kubelet   string `yaml:"kubelet,omitempty"`
+	Etcd      string `yaml:"etcd,omitempty"`
+	VNC       string `yaml:"vnc,omitempty"`
+	MQTT      string `yaml:"mqtt,omitempty"`
+	MQTTS     string `yaml:"mqtts,omitempty"`
 }
 
 type ConfigBanners struct {

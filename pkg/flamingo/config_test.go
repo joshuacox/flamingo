@@ -19,6 +19,10 @@ ports:
   postgres: "5433"
   mysql: "3307"
   mongodb: "27018"
+  docker: "2375"
+  kubelet: "10250"
+  vnc: "5901"
+  mqtt: "1884"
 banners:
   mysql: "8.0.35-deception"
 metrics:
@@ -51,7 +55,7 @@ metrics:
 	if len(cfg.Outputs) != 2 || cfg.Outputs[1] != "es://http://elasticsearch:9200/flamingo" {
 		t.Errorf("unexpected outputs: %v", cfg.Outputs)
 	}
-	if cfg.Ports.Postgres != "5433" || cfg.Ports.MySQL != "3307" || cfg.Ports.MongoDB != "27018" {
+	if cfg.Ports.Postgres != "5433" || cfg.Ports.MySQL != "3307" || cfg.Ports.MongoDB != "27018" || cfg.Ports.Docker != "2375" || cfg.Ports.Kubelet != "10250" || cfg.Ports.VNC != "5901" || cfg.Ports.MQTT != "1884" {
 		t.Errorf("unexpected ports: %+v", cfg.Ports)
 	}
 	if cfg.Banners.MySQL != "8.0.35-deception" {

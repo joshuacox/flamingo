@@ -195,6 +195,33 @@ func startCapture(cmd *cobra.Command, args []string) {
 		setupKerberos(rw)
 	}
 
+	// Docker
+	if _, enabled := protocols["docker"]; enabled {
+		setupDocker(rw)
+		setupDockerTLS(rw)
+	}
+
+	// Kubelet
+	if _, enabled := protocols["kubelet"]; enabled {
+		setupKubelet(rw)
+	}
+
+	// etcd
+	if _, enabled := protocols["etcd"]; enabled {
+		setupEtcd(rw)
+	}
+
+	// VNC
+	if _, enabled := protocols["vnc"]; enabled {
+		setupVNC(rw)
+	}
+
+	// MQTT
+	if _, enabled := protocols["mqtt"]; enabled {
+		setupMQTT(rw)
+		setupMQTTS(rw)
+	}
+
 	// Metrics HTTP server
 	if params.EnableMetrics {
 		mSrv, err := flamingo.StartMetricsServer(params.MetricsPort)
@@ -1083,6 +1110,179 @@ func setupKerberos(rw *flamingo.RecordWriter) {
 				log.Fatalf("failed to start kerberos server %s:%d: %q", conf.BindHost, conf.BindPort, err)
 			} else {
 				log.Errorf("failed to start kerberos server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
+func setupDocker(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.DockerPorts)
+	if err != nil {
+		log.Fatalf("failed to process docker ports %s: %s", params.DockerPorts, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfDocker()
+		conf.BindPort = uint16(port)
+		conf.RecordWriter = rw
+		if err := flamingo.SpawnDocker(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start docker server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start docker server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
+func setupDockerTLS(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.DockerTLSPorts)
+	if err != nil {
+		log.Fatalf("failed to process dockertls ports %s: %s", params.DockerTLSPorts, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfDocker()
+		conf.BindPort = uint16(port)
+		conf.TLS = true
+		conf.TLSCert = params.TLSCertData
+		conf.TLSKey = params.TLSKeyData
+		conf.TLSName = params.TLSName
+		conf.RecordWriter = rw
+		if err := flamingo.SpawnDocker(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start dockertls server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start dockertls server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
+func setupKubelet(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.KubeletPorts)
+	if err != nil {
+		log.Fatalf("failed to process kubelet ports %s: %s", params.KubeletPorts, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfKubelet()
+		conf.BindPort = uint16(port)
+		conf.TLS = true
+		conf.TLSCert = params.TLSCertData
+		conf.TLSKey = params.TLSKeyData
+		conf.TLSName = params.TLSName
+		conf.RecordWriter = rw
+		if err := flamingo.SpawnKubelet(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start kubelet server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start kubelet server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
+func setupEtcd(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.EtcdPorts)
+	if err != nil {
+		log.Fatalf("failed to process etcd ports %s: %s", params.EtcdPorts, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfEtcd()
+		conf.BindPort = uint16(port)
+		conf.RecordWriter = rw
+		if err := flamingo.SpawnEtcd(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start etcd server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start etcd server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
+func setupVNC(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.VNCPorts)
+	if err != nil {
+		log.Fatalf("failed to process vnc ports %s: %s", params.VNCPorts, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfVNC()
+		conf.BindPort = uint16(port)
+		conf.RecordWriter = rw
+		if err := flamingo.SpawnVNC(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start vnc server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start vnc server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
+func setupMQTT(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.MQTTPorts)
+	if err != nil {
+		log.Fatalf("failed to process mqtt ports %s: %s", params.MQTTPorts, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfMQTT()
+		conf.BindPort = uint16(port)
+		conf.RecordWriter = rw
+		if err := flamingo.SpawnMQTT(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start mqtt server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start mqtt server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			}
+			continue
+		}
+		protocolCount++
+		cleanupHandlers = append(cleanupHandlers, func() { conf.Shutdown() })
+	}
+}
+
+func setupMQTTS(rw *flamingo.RecordWriter) {
+	ports, err := flamingo.CrackPorts(params.MQTTSPorts)
+	if err != nil {
+		log.Fatalf("failed to process mqtts ports %s: %s", params.MQTTSPorts, err)
+	}
+
+	for _, port := range ports {
+		conf := flamingo.NewConfMQTT()
+		conf.BindPort = uint16(port)
+		conf.TLS = true
+		conf.TLSCert = params.TLSCertData
+		conf.TLSKey = params.TLSKeyData
+		conf.TLSName = params.TLSName
+		conf.RecordWriter = rw
+		if err := flamingo.SpawnMQTT(conf); err != nil {
+			if params.DontIgnoreFailures {
+				log.Fatalf("failed to start mqtts server %s:%d: %q", conf.BindHost, conf.BindPort, err)
+			} else {
+				log.Errorf("failed to start mqtts server %s:%d: %q", conf.BindHost, conf.BindPort, err)
 			}
 			continue
 		}

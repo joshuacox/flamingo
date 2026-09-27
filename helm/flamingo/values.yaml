@@ -47,8 +47,8 @@ securityContext:
 
 # Flamingo configuration options
 config:
-  # Comma-separated list of protocols to enable: ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet,postgres,mysql,mongodb,smb,winrm,kerberos
-  protocols: "ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet,postgres,mysql,mongodb,smb,winrm,kerberos"
+  # Comma-separated list of protocols to enable: ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet,postgres,mysql,mongodb,smb,winrm,kerberos,docker,kubelet,etcd,vnc,mqtt
+  protocols: "ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet,postgres,mysql,mongodb,smb,winrm,kerberos,docker,kubelet,etcd,vnc,mqtt"
 
   # Verbose / Quiet flags
   verbose: false
@@ -73,6 +73,13 @@ config:
     winrm: "5985"
     winrms: "5986"
     kerberos: "88"
+    docker: "2375"
+    dockertls: "2376"
+    kubelet: "10250"
+    etcd: "2379"
+    vnc: "5900"
+    mqtt: "1883"
+    mqtts: "8883"
     dns: "53,5353"
     dnsResolveToIP: ""
     snmp: "161"
@@ -254,6 +261,41 @@ service:
       port: 88
       targetPort: 88
       protocol: UDP
+    docker:
+      enabled: true
+      port: 2375
+      targetPort: 2375
+      protocol: TCP
+    dockertls:
+      enabled: true
+      port: 2376
+      targetPort: 2376
+      protocol: TCP
+    kubelet:
+      enabled: true
+      port: 10250
+      targetPort: 10250
+      protocol: TCP
+    etcd:
+      enabled: true
+      port: 2379
+      targetPort: 2379
+      protocol: TCP
+    vnc:
+      enabled: true
+      port: 5900
+      targetPort: 5900
+      protocol: TCP
+    mqtt:
+      enabled: true
+      port: 1883
+      targetPort: 1883
+      protocol: TCP
+    mqtts:
+      enabled: true
+      port: 8883
+      targetPort: 8883
+      protocol: TCP
     ssh:
       enabled: true
       port: 22

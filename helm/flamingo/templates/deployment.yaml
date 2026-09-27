@@ -109,6 +109,27 @@ spec:
             {{- if .Values.config.ports.kerberos }}
             - "--kerberos-ports={{ .Values.config.ports.kerberos }}"
             {{- end }}
+            {{- if .Values.config.ports.docker }}
+            - "--docker-ports={{ .Values.config.ports.docker }}"
+            {{- end }}
+            {{- if .Values.config.ports.dockertls }}
+            - "--dockertls-ports={{ .Values.config.ports.dockertls }}"
+            {{- end }}
+            {{- if .Values.config.ports.kubelet }}
+            - "--kubelet-ports={{ .Values.config.ports.kubelet }}"
+            {{- end }}
+            {{- if .Values.config.ports.etcd }}
+            - "--etcd-ports={{ .Values.config.ports.etcd }}"
+            {{- end }}
+            {{- if .Values.config.ports.vnc }}
+            - "--vnc-ports={{ .Values.config.ports.vnc }}"
+            {{- end }}
+            {{- if .Values.config.ports.mqtt }}
+            - "--mqtt-ports={{ .Values.config.ports.mqtt }}"
+            {{- end }}
+            {{- if .Values.config.ports.mqtts }}
+            - "--mqtts-ports={{ .Values.config.ports.mqtts }}"
+            {{- end }}
             {{- if .Values.metrics.enabled }}
             - "--metrics"
             - "--metrics-port={{ .Values.metrics.port }}"
@@ -244,6 +265,41 @@ spec:
             - name: kerberos-udp
               containerPort: {{ .Values.service.ports.kerberosUdp.targetPort }}
               protocol: UDP
+            {{- end }}
+            {{- if .Values.service.ports.docker.enabled }}
+            - name: docker
+              containerPort: {{ .Values.service.ports.docker.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.dockertls.enabled }}
+            - name: dockertls
+              containerPort: {{ .Values.service.ports.dockertls.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.kubelet.enabled }}
+            - name: kubelet
+              containerPort: {{ .Values.service.ports.kubelet.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.etcd.enabled }}
+            - name: etcd
+              containerPort: {{ .Values.service.ports.etcd.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.vnc.enabled }}
+            - name: vnc
+              containerPort: {{ .Values.service.ports.vnc.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.mqtt.enabled }}
+            - name: mqtt
+              containerPort: {{ .Values.service.ports.mqtt.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.mqtts.enabled }}
+            - name: mqtts
+              containerPort: {{ .Values.service.ports.mqtts.targetPort }}
+              protocol: TCP
             {{- end }}
             {{- if .Values.metrics.enabled }}
             - name: metrics

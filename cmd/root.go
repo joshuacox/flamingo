@@ -36,6 +36,13 @@ type flamingoParameters struct {
 	WinRMPorts         string
 	WinRMSPorts        string
 	KerberosPorts      string
+	DockerPorts        string
+	DockerTLSPorts     string
+	KubeletPorts       string
+	EtcdPorts          string
+	VNCPorts           string
+	MQTTPorts          string
+	MQTTSPorts         string
 	MetricsPort        uint16
 	EnableMetrics      bool
 	POP3Banner         string
@@ -168,6 +175,27 @@ func applyConfigFile(cmd *cobra.Command, cfg *flamingo.ConfigFile) {
 	if cfg.Ports.Kerberos != "" && !cmd.Flags().Changed("kerberos-ports") {
 		params.KerberosPorts = cfg.Ports.Kerberos
 	}
+	if cfg.Ports.Docker != "" && !cmd.Flags().Changed("docker-ports") {
+		params.DockerPorts = cfg.Ports.Docker
+	}
+	if cfg.Ports.DockerTLS != "" && !cmd.Flags().Changed("dockertls-ports") {
+		params.DockerTLSPorts = cfg.Ports.DockerTLS
+	}
+	if cfg.Ports.Kubelet != "" && !cmd.Flags().Changed("kubelet-ports") {
+		params.KubeletPorts = cfg.Ports.Kubelet
+	}
+	if cfg.Ports.Etcd != "" && !cmd.Flags().Changed("etcd-ports") {
+		params.EtcdPorts = cfg.Ports.Etcd
+	}
+	if cfg.Ports.VNC != "" && !cmd.Flags().Changed("vnc-ports") {
+		params.VNCPorts = cfg.Ports.VNC
+	}
+	if cfg.Ports.MQTT != "" && !cmd.Flags().Changed("mqtt-ports") {
+		params.MQTTPorts = cfg.Ports.MQTT
+	}
+	if cfg.Ports.MQTTS != "" && !cmd.Flags().Changed("mqtts-ports") {
+		params.MQTTSPorts = cfg.Ports.MQTTS
+	}
 
 	// Banners
 	if cfg.Banners.POP3 != "" && !cmd.Flags().Changed("pop3-banner") {
@@ -236,7 +264,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&params.Quiet, "quiet", "q", false, "Hide startup banners and other extraneous output")
 	rootCmd.PersistentFlags().BoolVarP(&params.DontIgnoreFailures, "dont-ignore", "", false, "Treat individual listener failures as fatal")
 
-	rootCmd.Flags().StringVarP(&params.Protocols, "protocols", "", "ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet,postgres,mysql,mongodb,smb,winrm,kerberos", "Specify a comma-separated list of protocols")
+	rootCmd.Flags().StringVarP(&params.Protocols, "protocols", "", "ssh,snmp,ldap,http,dns,ftp,imap,pop3,smtp,redis,telnet,postgres,mysql,mongodb,smb,winrm,kerberos,docker,kubelet,etcd,vnc,mqtt", "Specify a comma-separated list of protocols")
 
 	// SNMP parameters
 	rootCmd.Flags().StringVarP(&params.SNMPPorts, "snmp-ports", "", "161", "The list of UDP ports to listen on for SNMP")
@@ -288,6 +316,13 @@ func init() {
 	rootCmd.Flags().StringVarP(&params.WinRMPorts, "winrm-ports", "", "5985", "The list of TCP ports to listen on for WinRM (HTTP)")
 	rootCmd.Flags().StringVarP(&params.WinRMSPorts, "winrms-ports", "", "5986", "The list of TCP ports to listen on for WinRM (HTTPS)")
 	rootCmd.Flags().StringVarP(&params.KerberosPorts, "kerberos-ports", "", "88", "The list of TCP/UDP ports to listen on for Kerberos")
+	rootCmd.Flags().StringVarP(&params.DockerPorts, "docker-ports", "", "2375", "The list of TCP ports to listen on for Docker Engine API (HTTP)")
+	rootCmd.Flags().StringVarP(&params.DockerTLSPorts, "dockertls-ports", "", "2376", "The list of TCP ports to listen on for Docker Engine API (HTTPS)")
+	rootCmd.Flags().StringVarP(&params.KubeletPorts, "kubelet-ports", "", "10250", "The list of TCP ports to listen on for Kubelet API (HTTPS)")
+	rootCmd.Flags().StringVarP(&params.EtcdPorts, "etcd-ports", "", "2379", "The list of TCP ports to listen on for etcd API")
+	rootCmd.Flags().StringVarP(&params.VNCPorts, "vnc-ports", "", "5900", "The list of TCP ports to listen on for VNC")
+	rootCmd.Flags().StringVarP(&params.MQTTPorts, "mqtt-ports", "", "1883", "The list of TCP ports to listen on for MQTT")
+	rootCmd.Flags().StringVarP(&params.MQTTSPorts, "mqtts-ports", "", "8883", "The list of TCP ports to listen on for MQTT (TLS)")
 
 	// Metrics parameters
 	rootCmd.Flags().BoolVarP(&params.EnableMetrics, "metrics", "", false, "Enable Prometheus metrics HTTP server")
