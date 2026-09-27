@@ -102,6 +102,21 @@ func startCapture(cmd *cobra.Command, args []string) {
 	// Configure TLS certificates
 	setupTLS()
 
+	// Initialize Threat Intelligence & Enrichment
+	enricher, err := flamingo.NewEnricher(flamingo.EnricherConfig{
+		GeoIPCityDB: params.GeoIPCityDB,
+		GeoIPASNDB:  params.GeoIPASNDB,
+		EnableRDNS:  params.EnableRDNS,
+		TorList:     params.TorList,
+		ScannerList: params.ScannerList,
+	}, flamingo.GlobalTLSRegistry)
+	if err != nil {
+		log.Warnf("failed to initialize enricher: %v", err)
+	} else {
+		rw.Enricher = enricher
+		cleanupHandlers = append(cleanupHandlers, func() { enricher.Close() })
+	}
+
 	// Setup protocol listeners
 
 	// SNMP

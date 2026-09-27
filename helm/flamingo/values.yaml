@@ -127,6 +127,20 @@ config:
   # Existing secret name containing outputs (keys will be passed as args)
   existingOutputsSecret: ""
 
+# Threat Intelligence & Enrichment options
+enrichment:
+  enabled: false
+  # Path or mount path to MaxMind GeoLite2 City database
+  geoipCityDB: ""
+  # Path or mount path to MaxMind GeoLite2 ASN database
+  geoipAsnDB: ""
+  # Enable non-blocking reverse DNS lookups
+  enableRdns: false
+  # Path to custom Tor exit node IP list
+  torList: ""
+  # Path to custom scanner CIDR ranges and tags list
+  scannerList: ""
+
 # Persistence configuration (useful if logging to file)
 persistence:
   enabled: false

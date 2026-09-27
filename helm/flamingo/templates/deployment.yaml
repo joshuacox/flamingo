@@ -177,6 +177,21 @@ spec:
             - "--tls-cert=/etc/flamingo/tls/tls.crt"
             - "--tls-key=/etc/flamingo/tls/tls.key"
             {{- end }}
+            {{- if .Values.enrichment.geoipCityDB }}
+            - "--geoip-db={{ .Values.enrichment.geoipCityDB }}"
+            {{- end }}
+            {{- if .Values.enrichment.geoipAsnDB }}
+            - "--asn-db={{ .Values.enrichment.geoipAsnDB }}"
+            {{- end }}
+            {{- if .Values.enrichment.enableRdns }}
+            - "--enable-rdns"
+            {{- end }}
+            {{- if .Values.enrichment.torList }}
+            - "--tor-list={{ .Values.enrichment.torList }}"
+            {{- end }}
+            {{- if .Values.enrichment.scannerList }}
+            - "--scanner-list={{ .Values.enrichment.scannerList }}"
+            {{- end }}
             {{- range .Values.config.outputs }}
             - {{ . | quote }}
             {{- end }}

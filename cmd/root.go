@@ -67,6 +67,11 @@ type flamingoParameters struct {
 	TLSOrgName         string
 	Protocols          string
 	ConfigOutputs      []string
+	GeoIPCityDB        string
+	GeoIPASNDB         string
+	EnableRDNS         bool
+	TorList            string
+	ScannerList        string
 }
 
 var params = &flamingoParameters{}
@@ -245,6 +250,23 @@ func applyConfigFile(cmd *cobra.Command, cfg *flamingo.ConfigFile) {
 	if len(cfg.Outputs) > 0 {
 		params.ConfigOutputs = cfg.Outputs
 	}
+
+	// Threat intelligence & enrichment
+	if cfg.Enrichment.GeoIPCityDB != "" && !cmd.Flags().Changed("geoip-db") {
+		params.GeoIPCityDB = cfg.Enrichment.GeoIPCityDB
+	}
+	if cfg.Enrichment.GeoIPASNDB != "" && !cmd.Flags().Changed("asn-db") {
+		params.GeoIPASNDB = cfg.Enrichment.GeoIPASNDB
+	}
+	if cfg.Enrichment.EnableRDNS != nil && !cmd.Flags().Changed("enable-rdns") {
+		params.EnableRDNS = *cfg.Enrichment.EnableRDNS
+	}
+	if cfg.Enrichment.TorList != "" && !cmd.Flags().Changed("tor-list") {
+		params.TorList = cfg.Enrichment.TorList
+	}
+	if cfg.Enrichment.ScannerList != "" && !cmd.Flags().Changed("scanner-list") {
+		params.ScannerList = cfg.Enrichment.ScannerList
+	}
 }
 
 // Execute is the main entry point for this tool
@@ -338,4 +360,11 @@ func init() {
 	rootCmd.Flags().StringVarP(&params.TLSKeyFile, "tls-key", "", "", "An optional x509 key for TLS listeners")
 	rootCmd.Flags().StringVarP(&params.TLSName, "tls-name", "", "localhost", "A server name to use with TLS listeners")
 	rootCmd.Flags().StringVarP(&params.TLSOrgName, "tls-org", "", "Flamingo Feed, Inc.", "An organization to use for self-signed certificates")
+
+	// Threat intelligence & enrichment parameters
+	rootCmd.Flags().StringVarP(&params.GeoIPCityDB, "geoip-db", "", "", "Path to MaxMind GeoLite2-City.mmdb database")
+	rootCmd.Flags().StringVarP(&params.GeoIPASNDB, "asn-db", "", "", "Path to MaxMind GeoLite2-ASN.mmdb database")
+	rootCmd.Flags().BoolVarP(&params.EnableRDNS, "enable-rdns", "", false, "Enable non-blocking reverse DNS lookups for client IP addresses")
+	rootCmd.Flags().StringVarP(&params.TorList, "tor-list", "", "", "Optional path to custom list of Tor exit node IP addresses")
+	rootCmd.Flags().StringVarP(&params.ScannerList, "scanner-list", "", "", "Optional path to custom list of scanner CIDR ranges and tags")
 }

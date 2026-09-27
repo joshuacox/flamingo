@@ -29,6 +29,7 @@ type RecordWriter struct {
 	OutputCleaners []OutputCleaner
 	outputChan     chan map[string]string
 	outputChanOpen bool
+	Enricher       *Enricher
 	m              sync.Mutex
 }
 
@@ -60,6 +61,10 @@ func (r *RecordWriter) Record(rtype string, proto string, source string, params 
 	IncrementConnections(proto)
 	if rtype == "credential" {
 		IncrementCredentialsCaptured(proto, params["method"])
+	}
+
+	if r.Enricher != nil {
+		r.Enricher.Enrich(rec)
 	}
 
 	r.m.Lock()

@@ -75,7 +75,7 @@ func SpawnKubelet(conf *ConfKubelet) error {
 				return fmt.Errorf("failed to load tls cert for kubelet on %s:%d: %w", conf.BindHost, conf.BindPort, err)
 			}
 			tlsCfg.Certificates = []tls.Certificate{kp}
-			conf.TLSConfig = tlsCfg
+			conf.TLSConfig = GlobalTLSRegistry.WrapTLSConfig(tlsCfg)
 		}
 		if conf.TLSConfig != nil {
 			l = tls.NewListener(l, conf.TLSConfig)
@@ -237,7 +237,7 @@ func SpawnEtcd(conf *ConfEtcd) error {
 				return fmt.Errorf("failed to load tls cert for etcd on %s:%d: %w", conf.BindHost, conf.BindPort, err)
 			}
 			tlsCfg.Certificates = []tls.Certificate{kp}
-			conf.TLSConfig = tlsCfg
+			conf.TLSConfig = GlobalTLSRegistry.WrapTLSConfig(tlsCfg)
 		}
 		if conf.TLSConfig != nil {
 			l = tls.NewListener(l, conf.TLSConfig)

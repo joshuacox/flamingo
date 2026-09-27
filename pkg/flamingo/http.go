@@ -95,6 +95,7 @@ func SpawnHTTP(c *ConfHTTP) error {
 		return fmt.Errorf("failed to load tls cert for https on %s:%d (%s)", c.BindHost, c.BindPort, err)
 	}
 	tlsConfig.Certificates = []tls.Certificate{kp}
+	GlobalTLSRegistry.WrapTLSConfig(&tlsConfig)
 
 	listener, err := tls.Listen("tcp", fmt.Sprintf("%s:%d", c.BindHost, c.BindPort), &tlsConfig)
 	if err != nil {

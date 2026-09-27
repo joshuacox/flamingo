@@ -13,6 +13,7 @@ A production-grade Helm chart for deploying [Flamingo](https://github.com/atredi
 - **Split-Protocol Services**: Option to split into separate `<release>-tcp` and `<release>-udp` services for cloud load balancers that do not allow mixed-protocol Services.
 - **Persistent Storage**: Configurable PVC support for logging collected credentials directly to disk.
 - **Zero-Trust NetworkPolicy**: Optional template to lock down pod ingress and egress traffic.
+- **Threat Intelligence & Enrichment**: Offline MaxMind GeoIP City & ASN enrichment, non-blocking reverse DNS lookups, Tor exit node tagging, mass-scanner network classification (Shodan, Censys, Shadowserver, BinaryEdge), and JA3/JA4 TLS client fingerprinting.
 - **Probes & Helm Test**: Configurable liveness/readiness probes and `helm test` connection validation.
 
 ## Prerequisites
@@ -85,3 +86,8 @@ config:
 | `service.splitProtocols` | Split into separate TCP and UDP services | `false` |
 | `networkPolicy.enabled` | Enable Kubernetes NetworkPolicy | `false` |
 | `persistence.enabled` | Enable PVC for file logging | `false` |
+| `enrichment.geoipCityDB` | Path to GeoLite2 City mmdb file | `""` |
+| `enrichment.geoipAsnDB` | Path to GeoLite2 ASN mmdb file | `""` |
+| `enrichment.enableRdns` | Enable reverse DNS PTR lookups | `false` |
+| `enrichment.torList` | Path to custom Tor exit nodes list | `""` |
+| `enrichment.scannerList` | Path to custom scanner CIDRs list | `""` |

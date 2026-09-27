@@ -20,7 +20,8 @@ type ConfigFile struct {
 	TLS                ConfigTLS     `yaml:"tls,omitempty"`
 	DNS                ConfigDNS     `yaml:"dns,omitempty"`
 	SSH                ConfigSSH     `yaml:"ssh,omitempty"`
-	Metrics            ConfigMetrics `yaml:"metrics,omitempty"`
+	Metrics            ConfigMetrics    `yaml:"metrics,omitempty"`
+	Enrichment         ConfigEnrichment `yaml:"enrichment,omitempty"`
 }
 
 type ConfigPorts struct {
@@ -86,6 +87,14 @@ type ConfigSSH struct {
 type ConfigMetrics struct {
 	Enabled *bool  `yaml:"enabled,omitempty"`
 	Port    uint16 `yaml:"port,omitempty"`
+}
+
+type ConfigEnrichment struct {
+	GeoIPCityDB string `yaml:"geoipCityDB,omitempty"`
+	GeoIPASNDB  string `yaml:"geoipAsnDB,omitempty"`
+	EnableRDNS  *bool  `yaml:"enableRdns,omitempty"`
+	TorList     string `yaml:"torList,omitempty"`
+	ScannerList string `yaml:"scannerList,omitempty"`
 }
 
 // LoadConfigFile parses a YAML configuration file from disk.
