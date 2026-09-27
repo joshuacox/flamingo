@@ -47,8 +47,8 @@ securityContext:
 
 # Flamingo configuration options
 config:
-  # Comma-separated list of protocols to enable: ssh,snmp,ldap,http,dns,ftp
-  protocols: "ssh,snmp,ldap,http,dns,ftp"
+  # Comma-separated list of protocols to enable: ssh,snmp,ldap,http,dns,ftp,imap
+  protocols: "ssh,snmp,ldap,http,dns,ftp,imap"
 
   # Verbose / Quiet flags
   verbose: false
@@ -58,6 +58,8 @@ config:
   # Protocol specific port configurations
   ports:
     ftp: "21"
+    imap: "143"
+    imaps: "993"
     dns: "53,5353"
     dnsResolveToIP: ""
     snmp: "161"
@@ -146,6 +148,16 @@ service:
       enabled: true
       port: 21
       targetPort: 21
+      protocol: TCP
+    imap:
+      enabled: true
+      port: 143
+      targetPort: 143
+      protocol: TCP
+    imaps:
+      enabled: true
+      port: 993
+      targetPort: 993
       protocol: TCP
     ssh:
       enabled: true

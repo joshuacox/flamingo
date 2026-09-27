@@ -61,6 +61,12 @@ spec:
             {{- if .Values.config.ports.ftp }}
             - "--ftp-ports={{ .Values.config.ports.ftp }}"
             {{- end }}
+            {{- if .Values.config.ports.imap }}
+            - "--imap-ports={{ .Values.config.ports.imap }}"
+            {{- end }}
+            {{- if .Values.config.ports.imaps }}
+            - "--imaps-ports={{ .Values.config.ports.imaps }}"
+            {{- end }}
             {{- if .Values.config.ports.dns }}
             - "--dns-ports={{ .Values.config.ports.dns }}"
             {{- end }}
@@ -111,6 +117,16 @@ spec:
             {{- if .Values.service.ports.ftp.enabled }}
             - name: ftp
               containerPort: {{ .Values.service.ports.ftp.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.imap.enabled }}
+            - name: imap
+              containerPort: {{ .Values.service.ports.imap.targetPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.ports.imaps.enabled }}
+            - name: imaps
+              containerPort: {{ .Values.service.ports.imaps.targetPort }}
               protocol: TCP
             {{- end }}
             {{- if .Values.service.ports.ssh.enabled }}

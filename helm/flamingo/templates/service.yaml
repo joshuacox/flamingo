@@ -20,6 +20,18 @@ spec:
       protocol: {{ .Values.service.ports.ftp.protocol | default "TCP" }}
       name: ftp
     {{- end }}
+    {{- if .Values.service.ports.imap.enabled }}
+    - port: {{ .Values.service.ports.imap.port }}
+      targetPort: {{ .Values.service.ports.imap.targetPort }}
+      protocol: {{ .Values.service.ports.imap.protocol | default "TCP" }}
+      name: imap
+    {{- end }}
+    {{- if .Values.service.ports.imaps.enabled }}
+    - port: {{ .Values.service.ports.imaps.port }}
+      targetPort: {{ .Values.service.ports.imaps.targetPort }}
+      protocol: {{ .Values.service.ports.imaps.protocol | default "TCP" }}
+      name: imaps
+    {{- end }}
     {{- if .Values.service.ports.ssh.enabled }}
     - port: {{ .Values.service.ports.ssh.port }}
       targetPort: {{ .Values.service.ports.ssh.targetPort }}
@@ -93,6 +105,18 @@ spec:
       targetPort: {{ .Values.service.ports.ftp.targetPort }}
       protocol: TCP
       name: ftp
+    {{- end }}
+    {{- if .Values.service.ports.imap.enabled }}
+    - port: {{ .Values.service.ports.imap.port }}
+      targetPort: {{ .Values.service.ports.imap.targetPort }}
+      protocol: TCP
+      name: imap
+    {{- end }}
+    {{- if .Values.service.ports.imaps.enabled }}
+    - port: {{ .Values.service.ports.imaps.port }}
+      targetPort: {{ .Values.service.ports.imaps.targetPort }}
+      protocol: TCP
+      name: imaps
     {{- end }}
     {{- if .Values.service.ports.ssh.enabled }}
     - port: {{ .Values.service.ports.ssh.port }}

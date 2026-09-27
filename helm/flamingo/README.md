@@ -6,7 +6,7 @@ A production-grade Helm chart for deploying [Flamingo](https://github.com/atredi
 
 - **Workload Modes**: Run as a standard `Deployment` or as a cluster-wide honeypot `DaemonSet` on every node.
 - **Host Networking**: Optional `hostNetwork: true` with `ClusterFirstWithHostNet` DNS policy for catching node-level credential spraying and lateral movement.
-- **Configurable Listeners**: Support for SSH, SNMP, LDAP, LDAPS, HTTP, HTTPS, DNS, and FTP credential capturing.
+- **Configurable Listeners**: Support for SSH, SNMP, LDAP, LDAPS, HTTP, HTTPS, DNS, FTP, IMAP, and IMAPS credential capturing.
 - **Privileged Port Binding**: Built-in `NET_BIND_SERVICE` Linux capability configuration to safely bind privileged low ports (<1024) under an unprivileged user.
 - **Persistent SSH Host Key**: Mount custom SSH host key secrets to prevent host key change warnings across pod restarts.
 - **Secret Outputs**: Safely store sensitive webhook URLs (Slack, Discord, Mattermost) or syslog endpoints inside Kubernetes Secrets.
