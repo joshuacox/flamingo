@@ -1,6 +1,20 @@
 apiVersion: v2
 name: flamingo
-description: A Helm chart for Flamingo network credential harvester
+description: A Helm chart for Flamingo network credential harvester honeypot
 type: application
-version: 0.1.0
+version: 0.2.0
 appVersion: "latest"
+keywords:
+  - security
+  - honeypot
+  - credentials
+  - network
+  - monitoring
+home: https://github.com/atredispartners/flamingo
+sources:
+  - https://github.com/atredispartners/flamingo
+maintainers:
+  - name: joshuacox
+    url: https://github.com/joshuacox
+annotations:
+  artifacthub.io/category: security

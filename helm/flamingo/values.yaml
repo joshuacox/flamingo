@@ -1,10 +1,20 @@
 # Default values for flamingo.
 # This is a YAML-formatted file.
 
+# Workload kind: "Deployment" or "DaemonSet"
+# Use "DaemonSet" with hostNetwork: true to run on every node as a cluster-wide honeypot.
+kind: Deployment
+
+# replicaCount only applies when kind is "Deployment"
 replicaCount: 1
 
+# Host network mode: when true, pod uses host network namespace (recommended for DaemonSet mode)
+hostNetwork: false
+# dnsPolicy: ClusterFirst (default for deployment) or ClusterFirstWithHostNet (recommended when hostNetwork: true)
+dnsPolicy: ClusterFirst
+
 image:
-  repository: flamingo
+  repository: ghcr.io/joshuacox/flamingo
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
@@ -25,15 +35,15 @@ serviceAccount:
 podAnnotations: {}
 
 podSecurityContext: {}
-  # fsGroup: 2000
+  # fsGroup: 65532
 
 securityContext:
-  # Capabilities required to bind to privileged ports (e.g., 21, 22, 53, 80, 161, 389, 443)
+  # Capabilities required to bind to privileged ports (<1024)
   capabilities:
     add:
       - NET_BIND_SERVICE
   # runAsNonRoot: true
-  # runAsUser: 1000
+  # runAsUser: 65532
 
 # Flamingo configuration options
 config:
@@ -64,8 +74,12 @@ config:
   # TLS options
   tlsName: "localhost"
   tlsOrg: "Flamingo Feed, Inc."
-  # Set to true if providing existing secret with tls.crt and tls.key
+  # Set to name of existing secret with tls.crt and tls.key
   customTlsSecret: ""
+
+  # SSH host key options
+  # Provide an existing secret name with key "id_rsa" or "ssh-host-key"
+  sshHostKeySecret: ""
 
   # Output destinations passed as positional arguments to flamingo
   # Examples:
@@ -76,6 +90,14 @@ config:
   outputs:
     - "stdout"
 
+  # Sensitive outputs to store in a chart-managed Kubernetes Secret and pass as args
+  # Examples:
+  #   - "https://hooks.slack.com/services/T00/B00/XXXX"
+  secretOutputs: []
+
+  # Existing secret name containing outputs (keys will be passed as args)
+  existingOutputsSecret: ""
+
 # Persistence configuration (useful if logging to file)
 persistence:
   enabled: false
@@ -84,12 +106,40 @@ persistence:
   size: 1Gi
   mountPath: /var/log/flamingo
 
+# Probes configuration
+livenessProbe:
+  enabled: false
+  tcpSocket:
+    port: 80
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: false
+  tcpSocket:
+    port: 80
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+
 # Service configuration
 # Exposes listener ports on Kubernetes
 service:
   type: ClusterIP
   # Annotations for cloud provider load balancers (e.g. AWS NLB, MetalLB)
   annotations: {}
+
+  # If true, creates separate <name>-tcp and <name>-udp services instead of a single service.
+  # Helpful for cloud providers (like AWS Classic ELB or certain Ingress controllers) that disallow mixed TCP/UDP services.
+  splitProtocols: false
+
+  # Specific annotations when splitProtocols is enabled
+  tcpAnnotations: {}
+  udpAnnotations: {}
+
   # List of ports to expose on the service
   ports:
     ftp:
@@ -138,6 +188,23 @@ service:
       targetPort: 636
       protocol: TCP
 
+# NetworkPolicy configuration
+networkPolicy:
+  enabled: false
+  # Allow ingress traffic from specific CIDR blocks or namespaces
+  # Leave empty to allow from all
+  ingress: []
+    # - from:
+    #     - podSelector: {}
+    #     - namespaceSelector: {}
+    #     - ipBlock:
+    #         cidr: 10.0.0.0/8
+  # Allow egress traffic to specific destinations (e.g. webhooks, syslogs)
+  egress: []
+    # - to:
+    #     - ipBlock:
+    #         cidr: 0.0.0.0/0
+
 resources: {}
   # limits:
   #   cpu: 200m
@@ -151,3 +218,8 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+extraEnv: []
+extraEnvFrom: []
+extraVolumes: []
+extraVolumeMounts: []

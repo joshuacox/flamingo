@@ -1,3 +1,4 @@
+{{- if not .Values.service.splitProtocols -}}
 apiVersion: v1
 kind: Service
 metadata:
@@ -67,3 +68,98 @@ spec:
       protocol: {{ .Values.service.ports.ldaps.protocol | default "TCP" }}
       name: ldaps
     {{- end }}
+{{- else -}}
+# TCP Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "flamingo.fullname" . }}-tcp
+  labels:
+    {{- include "flamingo.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.service.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.service.tcpAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "flamingo.selectorLabels" . | nindent 4 }}
+  ports:
+    {{- if .Values.service.ports.ftp.enabled }}
+    - port: {{ .Values.service.ports.ftp.port }}
+      targetPort: {{ .Values.service.ports.ftp.targetPort }}
+      protocol: TCP
+      name: ftp
+    {{- end }}
+    {{- if .Values.service.ports.ssh.enabled }}
+    - port: {{ .Values.service.ports.ssh.port }}
+      targetPort: {{ .Values.service.ports.ssh.targetPort }}
+      protocol: TCP
+      name: ssh
+    {{- end }}
+    {{- if .Values.service.ports.dnsTcp.enabled }}
+    - port: {{ .Values.service.ports.dnsTcp.port }}
+      targetPort: {{ .Values.service.ports.dnsTcp.targetPort }}
+      protocol: TCP
+      name: dns-tcp
+    {{- end }}
+    {{- if .Values.service.ports.http.enabled }}
+    - port: {{ .Values.service.ports.http.port }}
+      targetPort: {{ .Values.service.ports.http.targetPort }}
+      protocol: TCP
+      name: http
+    {{- end }}
+    {{- if .Values.service.ports.ldap.enabled }}
+    - port: {{ .Values.service.ports.ldap.port }}
+      targetPort: {{ .Values.service.ports.ldap.targetPort }}
+      protocol: TCP
+      name: ldap
+    {{- end }}
+    {{- if .Values.service.ports.https.enabled }}
+    - port: {{ .Values.service.ports.https.port }}
+      targetPort: {{ .Values.service.ports.https.targetPort }}
+      protocol: TCP
+      name: https
+    {{- end }}
+    {{- if .Values.service.ports.ldaps.enabled }}
+    - port: {{ .Values.service.ports.ldaps.port }}
+      targetPort: {{ .Values.service.ports.ldaps.targetPort }}
+      protocol: TCP
+      name: ldaps
+    {{- end }}
+---
+# UDP Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "flamingo.fullname" . }}-udp
+  labels:
+    {{- include "flamingo.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.service.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.service.udpAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "flamingo.selectorLabels" . | nindent 4 }}
+  ports:
+    {{- if .Values.service.ports.dnsUdp.enabled }}
+    - port: {{ .Values.service.ports.dnsUdp.port }}
+      targetPort: {{ .Values.service.ports.dnsUdp.targetPort }}
+      protocol: UDP
+      name: dns-udp
+    {{- end }}
+    {{- if .Values.service.ports.snmp.enabled }}
+    - port: {{ .Values.service.ports.snmp.port }}
+      targetPort: {{ .Values.service.ports.snmp.targetPort }}
+      protocol: UDP
+      name: snmp
+    {{- end }}
+{{- end }}

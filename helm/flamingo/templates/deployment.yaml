@@ -1,11 +1,13 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: {{ .Values.kind | default "Deployment" }}
 metadata:
   name: {{ include "flamingo.fullname" . }}
   labels:
     {{- include "flamingo.labels" . | nindent 4 }}
 spec:
+  {{- if eq (.Values.kind | default "Deployment") "Deployment" }}
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "flamingo.selectorLabels" . | nindent 6 }}
@@ -23,6 +25,8 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "flamingo.serviceAccountName" . }}
+      hostNetwork: {{ .Values.hostNetwork | default false }}
+      dnsPolicy: {{ .Values.dnsPolicy | default "ClusterFirst" }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -31,6 +35,16 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if or .Values.extraEnv .Values.config.secretOutputs .Values.config.existingOutputsSecret }}
+          env:
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.extraEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           args:
             {{- if .Values.config.protocols }}
             - "--protocols={{ .Values.config.protocols }}"
@@ -58,6 +72,9 @@ spec:
             {{- end }}
             {{- if .Values.config.ports.ssh }}
             - "--ssh-ports={{ .Values.config.ports.ssh }}"
+            {{- end }}
+            {{- if .Values.config.sshHostKeySecret }}
+            - "--ssh-host-key=/etc/flamingo/ssh/host_key"
             {{- end }}
             {{- if .Values.config.ports.ldap }}
             - "--ldap-ports={{ .Values.config.ports.ldap }}"
@@ -136,6 +153,14 @@ spec:
               containerPort: {{ .Values.service.ports.ldaps.targetPort }}
               protocol: TCP
             {{- end }}
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            {{- toYaml (omit .Values.livenessProbe "enabled") | nindent 12 }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            {{- toYaml (omit .Values.readinessProbe "enabled") | nindent 12 }}
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
@@ -148,6 +173,14 @@ spec:
               mountPath: /etc/flamingo/tls
               readOnly: true
             {{- end }}
+            {{- if .Values.config.sshHostKeySecret }}
+            - name: ssh-key
+              mountPath: /etc/flamingo/ssh
+              readOnly: true
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
       volumes:
         {{- if .Values.persistence.enabled }}
         - name: data
@@ -158,6 +191,17 @@ spec:
         - name: tls
           secret:
             secretName: {{ .Values.config.customTlsSecret }}
+        {{- end }}
+        {{- if .Values.config.sshHostKeySecret }}
+        - name: ssh-key
+          secret:
+            secretName: {{ .Values.config.sshHostKeySecret }}
+            items:
+              - key: id_rsa
+                path: host_key
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

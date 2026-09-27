@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "flamingo.fullname" . }}-test-connection"
+  labels:
+    {{- include "flamingo.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: test-connection
+      image: busybox:1.36
+      command: ['sh', '-c']
+      args:
+        - |
+          echo "Testing TCP port 80..."
+          nc -z -w 5 {{ include "flamingo.fullname" . }}{{ if .Values.service.splitProtocols }}-tcp{{ end }} {{ .Values.service.ports.http.port }} || true
+  restartPolicy: Never

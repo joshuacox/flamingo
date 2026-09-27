@@ -1,15 +1,19 @@
 # Flamingo Helm Chart
 
-A Helm chart for deploying [Flamingo](https://github.com/atredispartners/flamingo) (a network credential harvester) on Kubernetes.
+A production-grade Helm chart for deploying [Flamingo](https://github.com/atredispartners/flamingo) (a network credential harvester & honeypot) on Kubernetes.
 
 ## Features
 
-- Configurable protocol listeners (SSH, SNMP, LDAP, LDAPS, HTTP, HTTPS, DNS, FTP).
-- Flexible output sinks: standard output, webhook endpoints, syslog receivers, or mounted persistent volumes.
-- Pod security context with `NET_BIND_SERVICE` capability for binding to standard low-numbered network ports (21, 22, 53, 80, 161, 389, 443, etc.).
-- Optional TLS secret mounting for custom certificates.
-- Optional PersistentVolumeClaim support for logging credentials to disk.
-- Exposes listeners via a configurable Kubernetes Service (ClusterIP, NodePort, or LoadBalancer).
+- **Workload Modes**: Run as a standard `Deployment` or as a cluster-wide honeypot `DaemonSet` on every node.
+- **Host Networking**: Optional `hostNetwork: true` with `ClusterFirstWithHostNet` DNS policy for catching node-level credential spraying and lateral movement.
+- **Configurable Listeners**: Support for SSH, SNMP, LDAP, LDAPS, HTTP, HTTPS, DNS, and FTP credential capturing.
+- **Privileged Port Binding**: Built-in `NET_BIND_SERVICE` Linux capability configuration to safely bind privileged low ports (<1024) under an unprivileged user.
+- **Persistent SSH Host Key**: Mount custom SSH host key secrets to prevent host key change warnings across pod restarts.
+- **Secret Outputs**: Safely store sensitive webhook URLs (Slack, Discord, Mattermost) or syslog endpoints inside Kubernetes Secrets.
+- **Split-Protocol Services**: Option to split into separate `<release>-tcp` and `<release>-udp` services for cloud load balancers that do not allow mixed-protocol Services.
+- **Persistent Storage**: Configurable PVC support for logging collected credentials directly to disk.
+- **Zero-Trust NetworkPolicy**: Optional template to lock down pod ingress and egress traffic.
+- **Probes & Helm Test**: Configurable liveness/readiness probes and `helm test` connection validation.
 
 ## Prerequisites
 
@@ -18,69 +22,61 @@ A Helm chart for deploying [Flamingo](https://github.com/atredispartners/flaming
 
 ## Installing the Chart
 
-To install the chart with the release name `flamingo`:
+### 1. Basic Deployment
 
 ```bash
 helm install flamingo ./helm/flamingo
 ```
 
-To expose listeners using a LoadBalancer (e.g. cloud provider load balancer or MetalLB):
+### 2. Node-Wide Honeypot (DaemonSet + HostNetwork)
+
+To run Flamingo directly on every Kubernetes node's host interface to detect lateral movement across your cluster:
 
 ```bash
 helm install flamingo ./helm/flamingo \
-  --set service.type=LoadBalancer
+  --set kind=DaemonSet \
+  --set hostNetwork=true \
+  --set dnsPolicy=ClusterFirstWithHostNet
 ```
 
-## Configuration
+### 3. Exposing via Cloud Load Balancer (Split TCP/UDP)
 
-The following table lists the primary configurable parameters of the chart and their defaults:
+For cloud providers (like AWS Classic ELB) that require dedicated services for TCP vs UDP:
+
+```bash
+helm install flamingo ./helm/flamingo \
+  --set service.type=LoadBalancer \
+  --set service.splitProtocols=true
+```
+
+### 4. Passing Sensitive Webhook Destinations via Secrets
+
+```yaml
+config:
+  secretOutputs:
+    - "https://hooks.slack.com/services/T000/B000/XXXXXXXXXXXX"
+```
+
+## Configuration Parameters
 
 | Parameter | Description | Default |
 | --- | --- | --- |
-| `replicaCount` | Number of flamingo replicas | `1` |
-| `image.repository` | Container image repository | `flamingo` |
-| `image.tag` | Container image tag | Chart `appVersion` (`latest`) |
-| `image.pullPolicy` | Image pull policy | `IfNotPresent` |
-| `securityContext.capabilities.add` | Capabilities to add to container | `[NET_BIND_SERVICE]` |
-| `config.protocols` | Enabled listener protocols (comma-separated) | `ssh,snmp,ldap,http,dns,ftp` |
-| `config.ports.ftp` | Port(s) for FTP listener | `"21"` |
-| `config.ports.ssh` | Port(s) for SSH listener | `"22"` |
-| `config.ports.dns` | Port(s) for DNS listener | `"53,5353"` |
-| `config.ports.dnsResolveToIP` | Optional IP to resolve DNS queries to | `""` |
-| `config.ports.http` | Port(s) for HTTP listener | `"80"` |
-| `config.ports.https` | Port(s) for HTTPS listener | `"443"` |
-| `config.ports.ldap` | Port(s) for LDAP listener | `"389"` |
-| `config.ports.ldaps` | Port(s) for LDAPS listener | `"636"` |
-| `config.ports.snmp` | Port(s) for SNMP listener | `"161"` |
-| `config.httpRealm` | Basic auth realm name | `Administration` |
-| `config.httpAuthMode` | Authentication mode (`ntlm` or `basic`) | `ntlm` |
-| `config.customTlsSecret` | Name of existing secret containing `tls.crt` and `tls.key` | `""` |
-| `config.outputs` | Output destinations (arguments to binary) | `["stdout"]` |
-| `persistence.enabled` | Enable persistent storage for file logging | `false` |
-| `persistence.mountPath` | Path to mount persistent volume | `/var/log/flamingo` |
-| `service.type` | Kubernetes service type | `ClusterIP` |
-| `service.ports.*` | Enable or disable specific ports on the Service | See `values.yaml` |
-
-## Examples
-
-### Sending logs to an external webhook
-
-```yaml
-config:
-  outputs:
-    - "stdout"
-    - "https://webhook.site/your-webhook-id"
-```
-
-### Logging to persistent storage
-
-```yaml
-persistence:
-  enabled: true
-  size: 5Gi
-
-config:
-  outputs:
-    - "stdout"
-    - "/var/log/flamingo/captured-creds.log"
-```
+| `kind` | Workload type (`Deployment` or `DaemonSet`) | `Deployment` |
+| `replicaCount` | Replicas (only for `kind: Deployment`) | `1` |
+| `hostNetwork` | Use host network namespace | `false` |
+| `dnsPolicy` | Pod DNS policy | `ClusterFirst` |
+| `image.repository` | Container image repository | `ghcr.io/joshuacox/flamingo` |
+| `image.tag` | Container image tag (defaults to `Chart.appVersion`) | `""` |
+| `securityContext.capabilities.add` | Container capabilities | `[NET_BIND_SERVICE]` |
+| `config.protocols` | Enabled protocols | `ssh,snmp,ldap,http,dns,ftp` |
+| `config.ports.*` | Port configuration per protocol | See `values.yaml` |
+| `config.sshHostKeySecret` | Name of Secret containing `id_rsa` host key | `""` |
+| `config.customTlsSecret` | Name of Secret containing `tls.crt` and `tls.key` | `""` |
+| `config.outputs` | Plaintext output targets (stdout, syslog, webhook) | `["stdout"]` |
+| `config.secretOutputs` | List of secret output targets stored in chart Secret | `[]` |
+| `livenessProbe.enabled` | Enable liveness probe | `false` |
+| `readinessProbe.enabled` | Enable readiness probe | `false` |
+| `service.type` | Kubernetes service type (`ClusterIP`, `NodePort`, `LoadBalancer`) | `ClusterIP` |
+| `service.splitProtocols` | Split into separate TCP and UDP services | `false` |
+| `networkPolicy.enabled` | Enable Kubernetes NetworkPolicy | `false` |
+| `persistence.enabled` | Enable PVC for file logging | `false` |
